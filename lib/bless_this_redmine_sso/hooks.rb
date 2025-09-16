@@ -12,10 +12,18 @@ module BlessThisRedmineSso
       logout_url = settings['oauth_logout_url'].to_s
       logout_label = l(:label_sso_logout, scope: :bless_this_redmine_sso)
 
+      back_url_field = ''
+      if (request = context[:request])
+        back_url_param = request.params[:back_url]
+        if back_url_param.present?
+          back_url_field = "            <input type=\"hidden\" name=\"back_url\" value=\"#{h(back_url_param)}\" />\n"
+        end
+      end
+
       button_html = <<~HTML
         <div id="oauth-login">
           <form action="/oauth/authorize" method="get">
-            <input type="submit" value="#{login_text}" id="oauth-login-submit" />
+#{back_url_field}            <input type="submit" value="#{login_text}" id="oauth-login-submit" />
           </form>
         </div>
       HTML

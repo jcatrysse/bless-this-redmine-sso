@@ -1,3 +1,5 @@
+require 'rack/utils'
+
 module BlessThisRedmineSso
   module Patches
     module AccountControllerPatch
@@ -16,10 +18,17 @@ module BlessThisRedmineSso
             # Redirect to OAuth authorization unless this is a callback
             unless request.path.include?('/oauth/')
               Rails.logger.info "SSO-only mode enabled, redirecting to OAuth provider"
-              url = '/oauth/authorize'
+              query_params = {}
+              if (back_url = params[:back_url]).present?
+                query_params[:back_url] = back_url
+              end
               if session.delete(:oauth_prompt_login)
-                separator = url.include?('?') ? '&' : '?'
-                url = "#{url}#{separator}prompt=login"
+                query_params[:prompt] = 'login'
+              end
+              url = '/oauth/authorize'
+              if query_params.present?
+                query_string = Rack::Utils.build_query(query_params)
+                url = "#{url}?#{query_string}"
               end
               redirect_to url
               return

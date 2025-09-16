@@ -15,7 +15,14 @@ class OauthController < ApplicationController
   def authorize
     # Redirect to OAuth authorization endpoint
     settings = Setting.plugin_bless_this_redmine_sso
-    
+
+    session.delete(:oauth_back_url)
+    if (back_url = params[:back_url]).present?
+      if (validated_back_url = validate_back_url(back_url))
+        session[:oauth_back_url] = validated_back_url
+      end
+    end
+
     unless oauth_configured?
       flash[:error] = l(:flash_oauth_not_configured, scope: :bless_this_redmine_sso)
       redirect_to signin_path
@@ -123,11 +130,13 @@ class OauthController < ApplicationController
               # Log the user in
               user.last_login_on = Time.now
               user.save!
+              back_url = session.delete(:oauth_back_url)
+              redirect_target = back_url && validate_back_url(back_url)
               self.logged_user = user
               session[:oauth_logged_in] = true
               session.delete(:must_activate_twofa) if %w[1 true].include?(settings['oauth_bypass_twofa'].to_s.downcase)
               Rails.logger.info "Successful OAuth authentication for '#{user.login}' from #{request.remote_ip}"
-              redirect_to my_page_path
+              redirect_to(redirect_target || my_page_path)
             else
               flash[:error] = l(:flash_user_inactive, scope: :bless_this_redmine_sso)
               redirect_to signin_path
@@ -418,7 +427,20 @@ class OauthController < ApplicationController
     # when explicitly enabled in settings.
     match_by_email = %w[1 true].include?(settings['oauth_match_by_email'].to_s.downcase)
 
-    user = User.find_by(login: username) if username.present?
+    case_insensitive = if settings.key?('oauth_case_insensitive_login')
+                         %w[1 true yes on].include?(settings['oauth_case_insensitive_login'].to_s.downcase)
+                       else
+                         true
+                       end
+
+    username_downcase = username.to_s.downcase
+    user = if username.present?
+             if case_insensitive
+               User.find_by('LOWER(login) = ?', username_downcase)
+             else
+               User.find_by(login: username)
+             end
+           end
     if user.nil? && match_by_email && email.present?
       user = User.find_by_mail(email)
     end
@@ -474,6 +496,8 @@ class OauthController < ApplicationController
       update_existing = %w[1 true].include?(settings['oauth_update_existing'].to_s.downcase)
       updated = false
       if update_existing
+        # The login is intentionally left untouched to preserve the existing
+        # Redmine username even if the OAuth provider uses different casing.
         if user.firstname != first_name && first_name.present?
           user.firstname = first_name
           updated = true

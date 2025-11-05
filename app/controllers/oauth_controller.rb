@@ -59,6 +59,9 @@ class OauthController < ApplicationController
             user = find_or_create_user(user_info)
             
             if user&.active?
+              # Mark user as OAuth user
+              user.mark_as_oauth_user! if user.respond_to?(:mark_as_oauth_user!)
+
               # Log the user in
               user.last_login_on = Time.now
               user.save!
@@ -185,7 +188,11 @@ class OauthController < ApplicationController
       # Set a random password (user will use OAuth)
       user.password = SecureRandom.hex(20)
       user.password_confirmation = user.password
-      
+
+      # Prevent password change requirement for OAuth users
+      user.must_change_passwd = false
+      user.passwd_changed_on = Time.now
+
       if user.save
         Rails.logger.info "Created new user via OAuth: #{username}"
       else
@@ -207,7 +214,17 @@ class OauthController < ApplicationController
         user.mail = email
         updated = true
       end
-      
+
+      # Ensure existing OAuth users don't have password change requirement
+      if user.must_change_passwd
+        user.must_change_passwd = false
+        updated = true
+      end
+      if user.passwd_changed_on.nil?
+        user.passwd_changed_on = Time.now
+        updated = true
+      end
+
       user.save if updated
     end
 

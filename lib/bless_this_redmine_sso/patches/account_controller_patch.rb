@@ -44,15 +44,18 @@ module BlessThisRedmineSso
           logout_url = settings['oauth_logout_url'].to_s
           oauth_enabled = %w[1 true].include?(settings['oauth_enabled'].to_s.downcase)
 
-          if oauth_enabled && logout_url.present? && session[:oauth_logged_in]
+          # Core logs out on POST only (GET shows a confirmation form), so a
+          # link or image elsewhere cannot end the session.
+          if oauth_enabled && logout_url.present? && session[:oauth_logged_in] && request.post?
             # End the Redmine session without triggering the default redirect
             logout_user
             session.delete(:oauth_logged_in)
             redirect_to logout_url
           else
-            # Force provider to show the login screen on next authorization when SSO is enabled
-            session[:oauth_prompt_login] = true if oauth_enabled
             super
+            # Force provider to show the login screen on next authorization when SSO is enabled.
+            # Set after super: logout_user resets the session.
+            session[:oauth_prompt_login] = true if oauth_enabled && request.post?
           end
         end
       end

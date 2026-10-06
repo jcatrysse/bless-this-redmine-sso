@@ -17,17 +17,38 @@ if defined?(AccountController) && defined?(Setting)
 
         context 'without oauth session flag' do
           it 'does not redirect to the SSO logout URL' do
-            get :logout
+            post :logout
             expect(response).not_to redirect_to(logout_url)
+          end
+
+          it 'asks the provider for credentials on the next SSO login' do
+            user = User.find_by(login: 'admin') || User.first
+            session[:user_id] = user.id
+            session[:tk] = user.generate_session_token
+            post :logout
+            expect(session[:user_id]).to be_nil
+            expect(session[:oauth_prompt_login]).to be(true)
           end
         end
 
+        # Core logs out on POST only; these used GET, which core answers with a
+        # confirmation form since Redmine 3.x.
         context 'with oauth session flag' do
           before { session[:oauth_logged_in] = true }
 
           it 'redirects to the SSO logout URL' do
-            get :logout
+            post :logout
             expect(response).to redirect_to(logout_url)
+          end
+
+          it 'does not log out or leave Redmine on GET' do
+            user = User.find_by(login: 'admin') || User.first
+            session[:user_id] = user.id
+            session[:tk] = user.generate_session_token
+            get :logout
+            expect(response).not_to redirect_to(logout_url)
+            expect(session[:oauth_logged_in]).to be(true)
+            expect(session[:user_id]).to eq(user.id)
           end
         end
       end
@@ -41,8 +62,9 @@ if defined?(AccountController) && defined?(Setting)
         end
 
         it 'does not redirect to the SSO logout URL' do
-          get :logout
+          post :logout
           expect(response).not_to redirect_to(logout_url)
+          expect(session[:oauth_prompt_login]).to be_nil
         end
       end
     end

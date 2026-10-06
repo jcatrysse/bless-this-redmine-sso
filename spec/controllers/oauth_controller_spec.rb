@@ -43,6 +43,24 @@ if defined?(OauthController) && defined?(Setting)
           expect(response.location).to include('example.com/authorize')
           expect(response.location).not_to include('code_challenge')
           expect(session[:oauth_code_verifier]).to be_nil
+          expect(response.location).not_to include('prompt=')
+        end
+
+        it 'asks the provider for credentials after a Redmine logout' do
+          session[:oauth_prompt_login] = true
+          get :authorize
+          expect(response.location).to include('prompt=login')
+          expect(session[:oauth_prompt_login]).to be_nil
+        end
+
+        it 'forwards prompt=login from the SSO-only login redirect' do
+          get :authorize, params: { prompt: 'login' }
+          expect(response.location).to include('prompt=login')
+        end
+
+        it 'does not forward other prompt values' do
+          get :authorize, params: { prompt: 'none' }
+          expect(response.location).not_to include('prompt=')
         end
       end
 

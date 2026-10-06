@@ -43,3 +43,14 @@
 ### Fixes
 - Consistent boolean parsing (`1/true`).
 - Minor fixes, updates, and refactoring
+
+## Unreleased - Redmine 7 migration
+- SSO entry point moved from `/oauth/authorize` (taken by core's OAuth2 provider on Redmine 6.1+) to `/oauth/sso/authorize`; the callback stays `/oauth/callback`.
+- Logout: the provider logout applies on POST only (core shows a confirmation form on GET); after a Redmine logout the next SSO login sends `prompt=login`.
+- Escape provider, id_token and validation messages in flash messages.
+- Settings page: flags stored as `0` are shown unchecked (saving no longer re-enables SSO-only).
+- SSO-only recovery SQL matches the YAML that Redmine stores.
+- Case-sensitive login matching works on MySQL/MariaDB.
+- Discovery reports timeouts, TLS and URL errors instead of failing with a 500.
+- Admin menu icon on Redmine 6+.
+- End-to-end scenarios against a fake OpenID provider (`test/e2e`).

@@ -18,16 +18,28 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 | Plugin id | `bless_this_redmine_sso` |
 | GEOxyz runs today | `feature_version_2.0.0` |
 | Upstream | murich/bless-this-redmine-sso master @ a5dc2eb (2025-10-08) |
-| Runs on Redmine 7 as is | DEELS |
+| Runs on Redmine 7 as is | DEELS (before this branch); JA on this branch |
 | Upstream sync | NIET NODIG |
 | After sync | n.v.t. |
 | Complexity (1 trivial .. 5 rewrite) | 2 |
 | Measured on | Redmine 7.0.1 (7.0-stable-GEOxyz + latest 7.0-stable), Rails 8.1.3.1, Ruby 3.3.6, PostgreSQL 16 and MariaDB 10.11 |
 | Branch head when this file was written | `5222a63` |
+| Migration session | 2026-10-06, see "Results of the migration session" below |
 
 ## Already on this branch
 
 - `52b359d` Move SSO entry point off /oauth/authorize, taken by core on Redmine 6.1+
+- Migration session 2026-10-06 (one concern per commit, each with a test that fails without it):
+  - `f732638` test_setup.sh: create the PostgreSQL role as root without sudo (tooling)
+  - `d022b7a` Fix the flaky password generator spec (work list 4)
+  - `2104c03` Honour case-sensitive login matching on MySQL/MariaDB (found on MariaDB)
+  - `c1d14b2` Escape provider, token and validation text in callback flash messages (security)
+  - `138fc01` Logout: POST only, and make prompt=login reach the provider
+  - `ee8a7a7` Admin menu: show the user icon on Redmine 6+ (`2e0181d` spec order fix)
+  - `42408e8` Settings page: render flags stored as '0' unchecked
+  - `87dbf12` Fix the SSO-only recovery SQL: settings are YAML, not JSON
+  - `d2fb45f` Discovery: report timeouts, TLS and URL errors instead of crashing
+  - `26f38d4`, `607f24e`, `401c7e7` end-to-end scenarios with a fake OpenID provider, evidence for PostgreSQL and MariaDB
 
 ## Work list for the migration session
 
@@ -50,26 +62,119 @@ In this order: things that break, security, the GEOxyz changes, the open items, 
 6. Check Redmine 7 webhooks against this plugin (see "Rules"), and note the result here even if nothing is needed.
 7. Verify every feature of the plugin by hand on a running Redmine 7 (screenshots).
 
+**Work list status (2026-10-06)**
+
+| # | item | status |
+|---|---|---|
+| sudo | Verify an SSO admin can confirm a sudo action | DONE, result: only with a known local Redmine password. See "Sudo mode and SSO" below and open question Q1. |
+| 1 | Real IdP on staging | OPEN for ansif: needs Entra ID credentials. Everything else of the flow is now exercised end to end against a fake OpenID provider (`test/e2e/_fake_idp.mjs`): authorize, PKCE, token, RS256 id_token via JWKS, userinfo, provisioning, SSO-only, provider logout. |
+| 2 | Bookmarks/docs to /oauth/sso/authorize | DONE in the repo (README, rake output, `52b359d`); GEOxyz bookmarks and intranet docs: production step below. |
+| 3 | Upstream "block local password for SSO users" | NOT BUILT, open question Q3. Upstream code not merged (logs the client secret, creates a custom field at runtime). |
+| 4 | Flaky password generator spec | DONE `d022b7a` (measured 73/2000 failures before). |
+| 5 | Tests on R7 PostgreSQL + MariaDB, and 5.1 | DONE, numbers below. |
+| 6 | Webhooks | NOTHING NEEDED: the plugin adds, hides or changes no issue data; it only touches login, logout and users. |
+| 7 | Every feature in the browser | DONE, inventory below, 50 plugin screenshots per database, all looked at. |
+
+**Test results (2026-10-06, branch head before the review)**
+
+| run | result |
+|---|---|
+| Baseline, before any change: R7.0-stable-GEOxyz (`8067e23`), PostgreSQL 16 | rspec 56 examples, 0 failures; e2e smoke 13 + core 6, 0 problems (`docs/e2e/baseline`) |
+| Baseline, MariaDB 10.11 | rspec 56 examples, **1 failure** (case-sensitive login matching, fixed in `2104c03`) |
+| R7.0-stable-GEOxyz, PostgreSQL 16, Ruby 3.3.6 | rspec 76 examples, 0 failures |
+| R7.0-stable-GEOxyz, MariaDB 10.11 | rspec 76 examples, 0 failures |
+| Redmine 5.1.13 (5.1-stable), PostgreSQL 16, Ruby 3.2.3 | rspec 76 examples, 0 failures, 1 pending (sprite icon check, Redmine 6+ only) |
+| R7 with redmine_impersonate, redmine_ldap_sync, view_customize, redmine_user_specific_theme, redmine_stealth (all `redmine70-migration`) | rspec 76/0; e2e 8 runs, 69 screenshots, 0 problems |
+| e2e R7 PostgreSQL, production mode (`docs/e2e`) | smoke 13, core 6, plugin scenarios 6 files / 50 screenshots, 0 problems |
+| e2e R7 MariaDB, production mode (`docs/e2e/mariadb`) | same, 0 problems |
+| e2e before: feature_version_2.0.0 on 5.1.13 (`docs/e2e/before`) | 67 screenshots; 11 failed expectations, all the behaviour fixed here |
+| Migrations | none in this plugin |
+
+**Sudo mode and SSO (Jan's decision: sudo stays on, verify only)**
+
+Measured on R7 (`docs/e2e/twofa_sudo-*.png`): a password login starts sudo mode
+(core `AccountController#password_authentication` calls `update_sudo_timestamp!`), an SSO
+login does not. So an admin who signs in through SSO is asked for the Redmine password
+already when *opening* the plugin settings (core `require_sudo_mode :index, :edit, :plugin`),
+and for every other sudo action (users, groups, roles, members, webhooks, 2FA). An admin whose
+account has a known local password passes; an account created by SSO only has the random
+password the plugin generated and cannot pass at all. Related: with "Bypass Redmine MFA" off
+and 2FA required, core's 2FA activation is also behind sudo, so SSO-created users cannot
+activate 2FA (`twofa_sudo-twofa-bypass-off.png`). No change made; see Q1.
+
 ## GEOxyz changes to review or re-apply
 
 These GEOxyz commits are on the branch GEOxyz runs today and therefore on this branch. Review each one against the code it now sits on (upstream merges and Redmine 7 core): drop it if upstream or core now does the same, rewrite it if it is not up to the quality rules below (tests, I18n, security, portability), keep it otherwise. Record the verdict per commit in this file.
 
-| commit | date | subject |
-|---|---|---|
-| `7c9cb89` | 2025-11-05 | Defect: resolve back_url not working |
-| `2899662` | 2025-09-15 | Feature: exchange_code_for_token and get_user_info specs |
-| `5639df4` | 2025-09-15 | Feature: Automatic OAuth setup |
-| `f68286d` | 2025-09-15 | Feature: Add support for id_token handling |
-| `d4e4cef` | 2025-09-15 | Feature: Implement PKCE support in OAuth flow |
-| `440d3d5` | 2025-09-15 | Feature: Add timeouts and error handling for HTTP requests |
-| `483c1d3` | 2025-09-15 | Patch: Update SSO button design and sso logout functionality |
-| `57f8e1c` | 2025-09-14 | Feature: comprehensive update (see changelog) |
+| commit | date | subject | verdict (2026-10-06) |
+|---|---|---|---|
+| `7c9cb89` | 2025-11-05 | Defect: resolve back_url not working | KEEP. Neither core nor upstream does this. back_url verified end to end (button and SSO-only). Fixed on top: case-sensitive matching was case-insensitive on MySQL/MariaDB (`2104c03`); the prompt=login flag it passes was always lost and never sent (`138fc01`). |
+| `2899662` | 2025-09-15 | Feature: exchange_code_for_token and get_user_info specs | KEEP. Specs only, all green on R7 PG/MariaDB and 5.1. |
+| `5639df4` | 2025-09-15 | Feature: Automatic OAuth setup | KEEP. Discovery verified in the browser and through `rake configure` against the fake provider. Fixed on top: timeouts/TLS/bad URL escaped as a 500 (`d2fb45f`). |
+| `f68286d` | 2025-09-15 | Feature: Add support for id_token handling | KEEP. RS256 via JWKS verified end to end, a token signed with a foreign key is refused. Fixed on top: error text went unescaped into the flash (`c1d14b2`). |
+| `d4e4cef` | 2025-09-15 | Feature: Implement PKCE support in OAuth flow | KEEP. The fake provider checks the S256 challenge against the verifier; verified end to end. |
+| `440d3d5` | 2025-09-15 | Feature: Add timeouts and error handling for HTTP requests | KEEP. Discovery lacked the same handling, added in `d2fb45f`. |
+| `483c1d3` | 2025-09-15 | Patch: Update SSO button design and sso logout functionality | KEEP. Button and the anonymous "SSO logout" link work in the Redmine 7 header (screenshots). |
+| `57f8e1c` | 2025-09-14 | Feature: comprehensive update (see changelog) | KEEP, with fixes: flags stored as '0' rendered checked so saving re-enabled SSO-only (`42408e8`); the documented SQL recovery never matched (`87dbf12`); GET /logout logged SSO users out (`138fc01`); flash escaping (`c1d14b2`). Workflows are workflow_dispatch only. |
+
+## Inventory of functions
+
+Every function, how a user reaches it, the scenario that exercises it and its screenshots
+(in `docs/e2e/`, the same names under `docs/e2e/mariadb/`). Users: plugin has no project
+permissions; everything is admin-only or anonymous/login related.
+
+| function | how a user reaches it | scenario | screenshots |
+|---|---|---|---|
+| Admin menu entry "BlessThis SSO" | Administration | settings.mjs | settings-admin-menu |
+| Settings page (admin only; 403 for manager, reporter, outsider; login for anonymous) | Administration > BlessThis SSO | settings.mjs | settings-page, settings-refused-* |
+| SSO-only lock-out warning | ticking SSO-only on the settings page | settings.mjs | settings-sso-only-warning |
+| Mapping presets | settings page, Mapping preset | settings.mjs | settings-mapping-preset |
+| OpenID discovery (POST /oauth/discover, admin only) | settings page, "Load settings from discovery" | settings.mjs | settings-discovery-success, settings-discovery-failure, settings-refused-* |
+| Saving settings (sudo mode) | settings page, Apply | settings.mjs, twofa_sudo.mjs | settings-saved, settings-login-button-after-save, twofa_sudo-sudo-* |
+| Login button, back_url | /login | sso_login.mjs, sso_only.mjs | sso_login-login-page, sso_only-disabled-no-button |
+| Authorize redirect (state, PKCE, scope, prompt) and "not configured" | button, /oauth/sso/authorize | sso_login.mjs, sso_only.mjs | sso_login-provider-page, sso_only-not-configured, sso_only-disabled-authorize-refused |
+| Callback: token, id_token RS256/JWKS, userinfo | provider redirect to /oauth/callback | sso_login.mjs | sso_login-new-user-back-url, sso_login-bad-signature-refused |
+| Auto-create user, default groups, custom field mapping | first SSO login | sso_login.mjs | sso_login-new-user-*, sso_login-auto-create-off-refused |
+| Update existing user on/off | SSO login of an existing user | sso_login.mjs | sso_login-existing-user-updated, sso_login-update-existing-off |
+| Case-insensitive / case-sensitive login matching | SSO login | sso_login.mjs | sso_login-case-insensitive, sso_login-case-sensitive-refused |
+| Match by email | SSO login | sso_login.mjs | sso_login-match-by-email |
+| Refusals: locked user, invalid claims, provider error, forged state | SSO login | sso_login.mjs | sso_login-locked-refused, -invalid-claims-refused, -provider-error-escaped, -forged-state-refused |
+| SSO-only mode (redirect, back_url, protected pages) | /login, any page needing login | sso_only.mjs | sso_only-sso-only-* |
+| SSO-only recovery SQL | database, after a lock-out | sso_only.mjs (+ spec on both DBs) | sso_only-recovery-sql-* |
+| Logout: provider logout URL, POST only, prompt=login after core logout | account menu > Sign out | logout.mjs | logout-* |
+| "SSO logout" link for anonymous users | login page header | logout.mjs | logout-login-page-sso-logout-link |
+| Bypass Redmine MFA on/off | SSO login with 2FA required | twofa_sudo.mjs | twofa_sudo-twofa-bypass-on, -off |
+| Rake tasks (configure, status, test, enable/disable, SSO-only, flags, help, reset) | `rake redmine:bless_this_sso:*` | rake_tasks.mjs | rake_tasks-after-*, rake_tasks-output.txt |
+| validate_flow rake task | `rake redmine:bless_this_sso:validate_flow` | not run: interactive, needs a code from a real provider login | - |
+| Stylesheet (login button) | every page head | smoke + all | no missing assets in any run |
+| Webhooks | - | n/a | plugin does not touch issue data |
+
+## Findings not fixed (written down, not in scope)
+
+- Hard-coded `/oauth/...` paths ignore `relative_url_root` (hooks, login patch). Pre-existing; GEOxyz runs at the root.
+- `OAuth user info: ...` is logged at info level with names and e-mail (PII, no secrets). Pre-existing.
+- No OIDC `nonce` is sent or checked; state + PKCE protect the flow. Would be a new feature.
+- Settings hints (`<em>`) wrap beside the wide inputs instead of under them; identical on 5.1 (core `em.info` would fix it). Cosmetic.
+- SSO users still see "Change password" in My account (upstream feature, Q3).
+
+## Open questions for Jan
+
+Built as recommended below, nothing waiting; each can be changed later.
+
+- **Q1 Sudo mode for SSO admins.** Today (R7, decision "sudo stays on"): SSO admins need a known local password for every admin page behind sudo, SSO-created admins cannot use them at all, and with MFA bypass off SSO users cannot activate 2FA. Options: (a) keep as is, give every admin a local password (current, no code); (b) let the plugin start sudo mode at a successful SSO login, like a password login does (one line, `update_sudo_timestamp!` in the callback; the IdP login counts as re-authentication for 15 minutes); (c) turn sudo off in configuration.yml. Recommendation: (b) if admins use SSO-only accounts, else (a). Not built, because the decision of 2026-10-06 says no change in the plugin.
+- **Q2 prompt=login after sign out.** Built (`138fc01`): after a Redmine sign out without a provider logout URL, the next SSO login sends `prompt=login`, so Entra ID asks which account / credentials instead of logging straight back in. This was the intent of 7c9cb89 but never worked. Option: drop it if users find the extra prompt annoying. Recommendation: keep; in SSO-only mode sign out is otherwise impossible.
+- **Q3 Block local password for SSO users** (upstream feature). Not built. Options: (a) leave; (b) build within the 2.0.0 design (no runtime custom field, no secret logging). Recommendation: (a) for the migration; (b) as a separate change if wanted, it interacts with Q1 (sudo needs a password).
 
 ## After the upgrade (production)
 
 Actions the person doing the upgrade must take, or know about, for this plugin:
 
 - The login entry point moved from /oauth/authorize to /oauth/sso/authorize (core OAuth2 provider owns the old path). The IdP redirect URI /oauth/callback is unchanged; update bookmarks and docs.
+- No migrations, no new settings, no data fix.
+- Admins who sign in through SSO need their Redmine password for sudo actions (Redmine 7 sudo mode, on). Make sure every admin account has a local password it knows, or decide Q1 first.
+- If SSO-only was ever turned off with the old SQL from the settings page: that statement never matched; check `rake redmine:bless_this_sso:status`. Use the corrected statement (settings page, README) or `rake redmine:bless_this_sso:disable_sso_only`.
+- Behaviour changes users may notice: after "Sign out" (without a provider logout URL) the next SSO login asks the provider for credentials (prompt=login); a GET on /logout no longer signs SSO users out (core confirmation form instead).
+- Stage with the real IdP before production (work list 1): login, SSO-only, sign out with and without the logout URL.
 
 ## How to test
 

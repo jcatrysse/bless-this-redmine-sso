@@ -8,7 +8,9 @@ if defined?(Redmine::MenuManager)
 
     it 'is registered and points to the plugin settings' do
       expect(item).not_to be_nil
-      expect(item.url).to eq(controller: 'settings', action: 'plugin', id: 'bless_this_redmine_sso')
+      # core turns 'settings' into '/settings' once the menu has been rendered
+      expect(item.url[:controller].to_s.delete_prefix('/')).to eq('settings')
+      expect(item.url).to include(action: 'plugin', id: 'bless_this_redmine_sso')
     end
 
     # Redmine 6+ draws menu icons from the SVG sprite (MenuItem#icon); the

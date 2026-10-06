@@ -23,32 +23,33 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 | After sync | n.v.t. |
 | Complexity (1 trivial .. 5 rewrite) | 2 |
 | Measured on | Redmine 7.0.1 (7.0-stable-GEOxyz + latest 7.0-stable), Rails 8.1.3.1, Ruby 3.3.6, PostgreSQL 16 and MariaDB 10.11 |
-| Branch head when this file was written | `a4b0c95` |
+| Branch head when this file was written | `88722c7` |
 
 ## Already on this branch
 
 - `52b359d` Move SSO entry point off /oauth/authorize, taken by core on Redmine 6.1+
+- `88722c7` Migration plan: test on a real Redmine end to end, and an OpenAI review
 
 ## Work list for the migration session
 
 In this order: things that break, security, the GEOxyz changes, the open items, then the checks.
 
-**Priority items**
+**Decided by Jan (2026-10-06), do not reopen**
 
-1. Sudo mode is on by default in Redmine 7: an admin who logs in through SSO has no local password to confirm sensitive actions. Decide: set `sudo_mode: false` in configuration.yml, or let the plugin handle it.
+- Sudo mode stays as Redmine 7 ships it (on), no change in the plugin or in configuration.yml. Only verify on a running Redmine that an admin who logs in through SSO can still confirm a sudo action, and write the result here.
 
-**Open items from the analysis** (Dutch; where they repeat a priority item, the priority item wins)
+**Open items from the analysis** (Dutch; where they conflict with a decision or a priority item above, those win)
 
-2. Log in on staging with the real IdP incl. SSO-only and provider logout (real OAuth flow not exercisable here); redirect URI stays /oauth/callback
-3. Update bookmarks/docs from /oauth/authorize to /oauth/sso/authorize
-4. Decide on upstream features (block local password for SSO users); do not merge as-is: they log the client secret and auto-create a custom field
-5. Fix flaky spec/password_generator_spec.rb:42 (expects !@#$%^&* only, generator uses all ASCII punctuation)
+1. Log in on staging with the real IdP incl. SSO-only and provider logout (real OAuth flow not exercisable here); redirect URI stays /oauth/callback
+2. Update bookmarks/docs from /oauth/authorize to /oauth/sso/authorize
+3. Decide on upstream features (block local password for SSO users); do not merge as-is: they log the client secret and auto-create a custom field
+4. Fix flaky spec/password_generator_spec.rb:42 (expects !@#$%^&* only, generator uses all ASCII punctuation)
 
 **Checks**
 
-6. Run the plugin's whole test suite on Redmine 7.0-stable-GEOxyz with PostgreSQL AND MariaDB, and once on 5.1-stable if the branch is meant to stay 5.1-compatible.
-7. Check Redmine 7 webhooks against this plugin (see "Rules"), and note the result here even if nothing is needed.
-8. Verify every feature of the plugin by hand on a running Redmine 7 (screenshots).
+5. Run the plugin's whole test suite on Redmine 7.0-stable-GEOxyz with PostgreSQL AND MariaDB, and once on 5.1-stable if the branch is meant to stay 5.1-compatible.
+6. Check Redmine 7 webhooks against this plugin (see "Rules"), and note the result here even if nothing is needed.
+7. Verify every feature of the plugin by hand on a running Redmine 7 (screenshots).
 
 ## GEOxyz changes to review or re-apply
 

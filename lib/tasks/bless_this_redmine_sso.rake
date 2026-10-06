@@ -262,7 +262,7 @@ namespace :redmine do
       puts "   If OAuth fails, disable SSO-only mode via rake command:"
       puts "   rake redmine:bless_this_sso:disable_sso_only"
       puts "   Or via database if rake is unavailable:"
-      puts "   UPDATE settings SET value = REPLACE(value, '\"oauth_sso_only\":\"1\"', '\"oauth_sso_only\":\"0\"') WHERE name = 'plugin_bless_this_redmine_sso';"
+      puts "   UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';"
       puts ""
       puts "All login attempts will now redirect to your OAuth provider."
     end

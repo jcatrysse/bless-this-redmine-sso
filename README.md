@@ -233,7 +233,7 @@ rake redmine:bless_this_sso:disable_sso_only
 
 Or via database if rake is unavailable:
 ```sql
-UPDATE settings SET value = REPLACE(value, '"oauth_sso_only":"1"', '"oauth_sso_only":"0"') WHERE name = 'plugin_redmine_oauth_sso';
+UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';
 ```
 
 ## Two-Factor Authentication

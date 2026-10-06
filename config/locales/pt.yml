@@ -7,7 +7,7 @@ pt:
     warning_sso_only_tip_html: "<strong>Ativar o modo apenas SSO desativará o formulário de login padrão com usuário e senha.</strong><br>Se você não puder entrar através do seu provedor OAuth, desative essa configuração com o comando rake:" 
     warning_sso_only_command: "rake redmine:bless_this_sso:disable_sso_only"
     warning_sso_only_db_tip_html: "Ou via banco de dados se o rake não estiver disponível:"
-    warning_sso_only_db_command: "UPDATE settings SET value = REPLACE(value, '\"oauth_sso_only\":\"1\"', '\"oauth_sso_only\":\"0\"') WHERE name = 'plugin_bless_this_redmine_sso';"
+    warning_sso_only_db_command: "UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';"
     warning_sso_only_footer_html: "<strong>Garanta que sua configuração OAuth esteja funcionando corretamente antes de habilitar o modo apenas SSO!</strong>"
     label_sso_only_mode: "Modo apenas SSO"
     label_disable_username_password_login: "Desativar login com usuário/senha"

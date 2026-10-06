@@ -7,7 +7,7 @@ en:
     warning_sso_only_tip_html: "<strong>Enabling SSO-Only mode will disable the standard username/password login form.</strong><br>If you cannot log in through your OAuth provider, you can disable this setting via rake command:"
     warning_sso_only_command: "rake redmine:bless_this_sso:disable_sso_only"
     warning_sso_only_db_tip_html: "Or via database if rake is unavailable:"
-    warning_sso_only_db_command: "UPDATE settings SET value = REPLACE(value, '\"oauth_sso_only\":\"1\"', '\"oauth_sso_only\":\"0\"') WHERE name = 'plugin_bless_this_redmine_sso';"
+    warning_sso_only_db_command: "UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';"
     warning_sso_only_footer_html: "<strong>Please ensure your OAuth configuration is working correctly before enabling SSO-Only mode!</strong>"
     label_sso_only_mode: "SSO-Only Mode"
     label_disable_username_password_login: "Disable username/password login"

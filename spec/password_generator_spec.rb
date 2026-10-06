@@ -36,10 +36,16 @@ RSpec.describe OauthController do
       allow(Setting).to receive(:password_required_char_classes).and_return(['special_chars']) if defined?(Setting)
     end
 
+    # The generator draws its specials from Setting::PASSWORD_CHAR_CLASSES (all
+    # ASCII punctuation in Redmine 5.1 to 7.0), so the expectation uses the same
+    # class; a fixed "!@#$%^&*" list failed about 1 run in 30.
     it 'includes at least one uppercase letter and one special character' do
-      password = OauthController.new.send(:generate_random_password)
-      expect(password).to match(/[A-Z]/)
-      expect(password).to match(/[!@#\$%\^&*]/)
+      special = Setting::PASSWORD_CHAR_CLASSES['special_chars']
+      200.times do
+        password = OauthController.new.send(:generate_random_password)
+        expect(password).to match(/[A-Z]/)
+        expect(password).to match(special)
+      end
     end
   end
 end

@@ -75,20 +75,35 @@ In this order: things that break, security, the GEOxyz changes, the open items, 
 | 6 | Webhooks | NOTHING NEEDED: the plugin adds, hides or changes no issue data; it only touches login, logout and users. |
 | 7 | Every feature in the browser | DONE, inventory below, 50 plugin screenshots per database, all looked at. |
 
-**Test results (2026-10-06, branch head before the review)**
+**Test results (2026-10-06)**
 
 | run | result |
 |---|---|
 | Baseline, before any change: R7.0-stable-GEOxyz (`8067e23`), PostgreSQL 16 | rspec 56 examples, 0 failures; e2e smoke 13 + core 6, 0 problems (`docs/e2e/baseline`) |
 | Baseline, MariaDB 10.11 | rspec 56 examples, **1 failure** (case-sensitive login matching, fixed in `2104c03`) |
-| R7.0-stable-GEOxyz, PostgreSQL 16, Ruby 3.3.6 | rspec 76 examples, 0 failures |
-| R7.0-stable-GEOxyz, MariaDB 10.11 | rspec 76 examples, 0 failures |
+| R7.0-stable-GEOxyz, PostgreSQL 16, Ruby 3.3.6 | rspec 78 examples, 0 failures (76 before the review's two added specs) |
+| R7.0-stable-GEOxyz, MariaDB 10.11 | rspec 78 examples, 0 failures |
 | Redmine 5.1.13 (5.1-stable), PostgreSQL 16, Ruby 3.2.3 | rspec 76 examples, 0 failures, 1 pending (sprite icon check, Redmine 6+ only) |
 | R7 with redmine_impersonate, redmine_ldap_sync, view_customize, redmine_user_specific_theme, redmine_stealth (all `redmine70-migration`) | rspec 76/0; e2e 8 runs, 69 screenshots, 0 problems |
 | e2e R7 PostgreSQL, production mode (`docs/e2e`) | smoke 13, core 6, plugin scenarios 6 files / 50 screenshots, 0 problems |
 | e2e R7 MariaDB, production mode (`docs/e2e/mariadb`) | same, 0 problems |
 | e2e before: feature_version_2.0.0 on 5.1.13 (`docs/e2e/before`) | 67 screenshots; 11 failed expectations, all the behaviour fixed here |
 | Migrations | none in this plugin |
+
+**Review**
+
+- Own adversarial review of the whole diff: no defect found (checked anonymous POST logout,
+  the prompt whitelist, the STI scope of the case-sensitive lookup, YAML quoting of the
+  recovery SQL on both databases).
+- OpenAI review (gpt-5, diff since `feature_version_2.0.0`), three rounds, every finding has a
+  `Resolution:` line in `docs/reviews/`:
+  - `openai-2026-10-06-177e21f.md`: 4 findings; 1 fixed (locale spec fallback), 2 not
+    reproducible and pinned by new specs (provider name escaping, error text without a flow),
+    1 pre-existing and recorded (relative_url_root).
+  - `openai-2026-10-06-7f91628.md`: 1 new finding fixed (SSO-only e2e now really POSTs a
+    password), relative_url_root repeated.
+  - `openai-2026-10-06-7c89cec.md`: 1 "blocker" that does not reproduce (Ruby local variable
+    scoping, shown), relative_url_root repeated. Nothing new accepted: loop ended.
 
 **Sudo mode and SSO (Jan's decision: sudo stays on, verify only)**
 

@@ -45,10 +45,18 @@ try {
   await showAccount(t.page);
   await t.shot('sso-only-back-url', 'SSO-only login as manager returns to the project page it started from');
 
-  // the password form is not reachable: a POST with a valid password does not log in
+  // the password form is not reachable, and a POST with a valid password does not log in
   await t.anonymous();
   const res = await t.page.request.get(t.BASE + '/login', { maxRedirects: 0 });
   check(t, res.status() === 302 && /\/oauth\/sso\/authorize/.test(res.headers().location || ''), `SSO-only GET /login is a 302 to /oauth/sso/authorize (${res.status()} ${res.headers().location})`);
+  await t.go('/');
+  const token = await t.page.locator('meta[name=csrf-token]').getAttribute('content');
+  const post = await t.page.request.post(t.BASE + '/login', {
+    form: { authenticity_token: token, username: 'admin', password: 'Redmine7Test!' }, maxRedirects: 0,
+  });
+  check(t, post.status() === 302 && /\/oauth\/sso\/authorize/.test(post.headers().location || ''), `SSO-only POST /login with a valid password is sent to the provider (${post.status()} ${post.headers().location})`);
+  const after = await t.page.request.get(t.BASE + '/my/page', { maxRedirects: 0 });
+  check(t, after.status() === 302 && /\/login/.test(after.headers().location || ''), `no session after the POST (${after.status()} ${after.headers().location})`);
 
   // a protected page as anonymous: login required, then SSO, then back
   await t.anonymous();

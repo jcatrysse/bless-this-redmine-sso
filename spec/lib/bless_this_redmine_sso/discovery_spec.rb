@@ -92,5 +92,25 @@ RSpec.describe BlessThisRedmineSso::Discovery do
         described_class.discover(discovery_url: 'https://id.example.com/.well-known/openid-configuration')
       }.to raise_error(BlessThisRedmineSso::Discovery::Error, /missing required fields/i)
     end
+
+    # A slow or unreachable provider used to escape as a 500 from
+    # POST /oauth/discover and a stack trace from rake configure.
+    [Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNRESET, OpenSSL::SSL::SSLError].each do |error|
+      it "raises a discovery error on #{error}" do
+        allow(http).to receive(:request).and_raise(error)
+
+        expect {
+          described_class.discover(discovery_url: 'https://idp.example.com/.well-known/openid-configuration')
+        }.to raise_error(described_class::Error, /Failed to connect/)
+      end
+    end
+
+    it 'raises a discovery error for a URL without a host' do
+      allow(Net::HTTP).to receive(:new).and_call_original
+
+      expect {
+        described_class.discover(discovery_url: 'not a url')
+      }.to raise_error(described_class::Error)
+    end
   end
 end

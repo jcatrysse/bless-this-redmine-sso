@@ -3,6 +3,8 @@
 require 'json'
 require 'net/http'
 require 'uri'
+require 'openssl'
+require 'timeout'
 
 begin
   require 'active_support/core_ext/object/blank'
@@ -136,8 +138,11 @@ module BlessThisRedmineSso
         rescue JSON::ParserError => e
           raise Error, "Discovery response contained invalid JSON: #{e.message}"
         end
-      rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+      rescue SocketError, SystemCallError, IOError, Timeout::Error, OpenSSL::SSL::SSLError => e
+        # Timeout::Error covers Net::OpenTimeout and Net::ReadTimeout
         raise Error, "Failed to connect to discovery endpoint: #{e.message}"
+      rescue URI::InvalidURIError, ArgumentError => e
+        raise Error, "Invalid discovery URL: #{e.message}"
       end
 
       def map_metadata(metadata)

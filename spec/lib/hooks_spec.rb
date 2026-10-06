@@ -24,6 +24,17 @@ if defined?(BlessThisRedmineSso::Hooks) && defined?(Setting)
         expect(html).to include('https://example.com/issues/7')
       end
 
+      it 'escapes the provider name in the button' do
+        Setting.plugin_bless_this_redmine_sso = {
+          'oauth_enabled' => '1', 'oauth_sso_only' => '0',
+          'oauth_provider_name' => '"><img src=x onerror=alert(1)>'
+        }
+        html = hooks.view_account_login_top(request: double('request', params: {}))
+
+        expect(html).not_to include('<img')
+        expect(html).to include('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;')
+      end
+
       it 'omits the hidden field when no back_url is provided' do
         request = double('request', params: {})
 

@@ -236,6 +236,13 @@ if defined?(OauthController) && defined?(Setting)
         expect(response).to redirect_to(signin_path)
       end
 
+      it 'ignores the error parameter when no OAuth flow is in progress' do
+        get :callback, params: { error: 'x' * 5000 }
+
+        expect(response).to redirect_to(signin_path)
+        expect(flash[:error]).not_to include('xxxx')
+      end
+
       it 'escapes the provider error before it goes into the flash' do
         session[:oauth_state] = 'expected'
 

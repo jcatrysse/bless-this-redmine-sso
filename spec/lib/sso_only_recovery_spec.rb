@@ -23,7 +23,10 @@ if defined?(Setting) && defined?(ActiveRecord::Base)
     end
 
     it 'is the same statement in every shipped locale' do
-      statements = %w[en nl de fr es it pt].map { |l| I18n.t(:warning_sso_only_db_command, scope: :bless_this_redmine_sso, locale: l) }
+      # raise: true so a locale missing the key cannot pass through the English fallback
+      statements = %w[en nl de fr es it pt].map do |l|
+        I18n.t(:warning_sso_only_db_command, scope: :bless_this_redmine_sso, locale: l, raise: true, fallback: false)
+      end
       expect(statements.uniq.size).to eq(1)
     end
   end

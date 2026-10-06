@@ -25,7 +25,7 @@ module BlessThisRedmineSso
               if session.delete(:oauth_prompt_login)
                 query_params[:prompt] = 'login'
               end
-              url = '/oauth/authorize'
+              url = '/oauth/sso/authorize'
               if query_params.present?
                 query_string = Rack::Utils.build_query(query_params)
                 url = "#{url}?#{query_string}"

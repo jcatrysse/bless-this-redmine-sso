@@ -209,7 +209,7 @@ namespace :redmine do
       puts "  Use PKCE: #{setting_enabled?(settings['oauth_pkce']) ? 'Enabled' : 'Disabled'}"
       puts "  Default Groups: #{settings['oauth_default_groups'].blank? ? 'None' : settings['oauth_default_groups']}"
       puts ""
-      puts "OAuth SSO is now enabled. Test at: /oauth/authorize"
+      puts "OAuth SSO is now enabled. Test at: /oauth/sso/authorize"
       puts "To enable SSO-only mode: rake redmine:bless_this_sso:enable_sso_only"
     end
 
@@ -462,7 +462,7 @@ namespace :redmine do
 
       if enabled
         puts "OAuth endpoints:"
-        puts "  Login: /oauth/authorize"
+        puts "  Login: /oauth/sso/authorize"
         puts "  Callback: /oauth/callback"
 
         if sso_only
@@ -515,7 +515,7 @@ namespace :redmine do
       puts "✓ Configuration test complete"
       puts "✓ All required settings present"
       puts ""
-      puts "Manual test: Visit /oauth/authorize to test OAuth flow"
+      puts "Manual test: Visit /oauth/sso/authorize to test OAuth flow"
     end
 
     desc "Validate full OAuth flow"

@@ -171,7 +171,7 @@ bundle exec rake redmine:bless_this_sso:reset
 bundle exec rake redmine:bless_this_sso:help
 ```
 
-`validate_flow` walks through the full authorization code exchange. The `/oauth/authorize` and `/oauth/callback` routes stay accessible even when OAuth SSO is disabled; without a valid configuration they simply redirect back to the standard login form so you can recover safely. The redirect URI defaults to `http://localhost`; register it with your provider and expect the final redirect page to fail to load locally-that is normal because the task only needs the `code` parameter.
+`validate_flow` walks through the full authorization code exchange. The `/oauth/sso/authorize` and `/oauth/callback` routes stay accessible even when OAuth SSO is disabled; without a valid configuration they simply redirect back to the standard login form so you can recover safely. The redirect URI defaults to `http://localhost`; register it with your provider and expect the final redirect page to fail to load locally-that is normal because the task only needs the `code` parameter.
 
 ### ID Token Validation
 

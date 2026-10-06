@@ -22,7 +22,7 @@ module BlessThisRedmineSso
 
       button_html = <<~HTML
         <div id="oauth-login">
-          <form action="/oauth/authorize" method="get">
+          <form action="/oauth/sso/authorize" method="get">
 #{back_url_field}            <input type="submit" value="#{login_text}" id="oauth-login-submit" />
           </form>
         </div>

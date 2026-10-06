@@ -59,7 +59,7 @@ if defined?(AccountController) && defined?(Setting)
         get :login, params: { back_url: 'https://example.com/issues/42' }
 
         uri = URI.parse(response.location)
-        expect(uri.path).to eq('/oauth/authorize')
+        expect(uri.path).to eq('/oauth/sso/authorize')
         params = Rack::Utils.parse_nested_query(uri.query)
         expect(params['back_url']).to eq('https://example.com/issues/42')
         expect(params).not_to have_key('prompt')
@@ -71,7 +71,7 @@ if defined?(AccountController) && defined?(Setting)
         get :login, params: { back_url: 'https://example.com/issues/42' }
 
         uri = URI.parse(response.location)
-        expect(uri.path).to eq('/oauth/authorize')
+        expect(uri.path).to eq('/oauth/sso/authorize')
         params = Rack::Utils.parse_nested_query(uri.query)
         expect(params['back_url']).to eq('https://example.com/issues/42')
         expect(params['prompt']).to eq('login')

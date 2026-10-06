@@ -438,7 +438,9 @@ class OauthController < ApplicationController
              if case_insensitive
                User.find_by('LOWER(login) = ?', username_downcase)
              else
-               User.find_by(login: username)
+               # MySQL/MariaDB compare with a case-insensitive collation, so
+               # check the casing in Ruby, as core User.find_by_login does.
+               User.where(login: username).detect { |u| u.login == username }
              end
            end
     if user.nil? && match_by_email && email.present?

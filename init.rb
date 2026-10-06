@@ -37,7 +37,7 @@ Redmine::Plugin.register :bless_this_redmine_sso do
     'oauth_default_groups' => ''
   }, :partial => 'settings/bless_this_redmine_sso_settings'
 
-  menu :admin_menu, :bless_this_sso, { :controller => 'settings', :action => 'plugin', :id => "bless_this_redmine_sso" }, :caption => :menu_bless_this_sso, :html => {:class => 'icon icon-user'}
+  menu :admin_menu, :bless_this_sso, { :controller => 'settings', :action => 'plugin', :id => "bless_this_redmine_sso" }, :caption => :menu_bless_this_sso, :icon => 'user', :html => {:class => 'icon icon-user'}
 end
 
 require_relative 'lib/bless_this_redmine_sso/hooks'

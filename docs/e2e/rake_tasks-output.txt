@@ -1,0 +1,572 @@
+$ OAUTH_DISCOVERY_URL=http://127.0.0.1:3999/.well-known/openid-configuration OAUTH_CLIENT_ID=redmine-e2e OAUTH_CLIENT_SECRET=*** OAUTH_PROVIDER_NAME=FakeIdP (rake) OAUTH_PKCE=1 rake redmine:bless_this_sso:configure   (exit 0)
+Configuring OAuth SSO plugin...
+✓ Loaded discovery metadata from http://127.0.0.1:3999/.well-known/openid-configuration
+✓ OAuth SSO configured successfully
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Case-insensitive Login Matching: Enabled
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+  Logout URL: http://127.0.0.1:3999/logout
+  Auto-create Users: Enabled
+  Update Existing Users: Enabled
+  Match Users by Email: Disabled
+  Bypass Redmine MFA: Enabled
+  Use PKCE: Enabled
+  Default Groups: None
+
+OAuth SSO is now enabled. Test at: /oauth/sso/authorize
+To enable SSO-only mode: rake redmine:bless_this_sso:enable_sso_only
+
+$ rake redmine:bless_this_sso:status   (exit 0)
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ✓ Enabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:test   (exit 0)
+Testing OAuth SSO configuration...
+✓ Authorization URL: http://127.0.0.1:3999/authorize (format valid)
+✓ Token URL: http://127.0.0.1:3999/token (format valid)
+✓ User Info URL: http://127.0.0.1:3999/userinfo (format valid)
+
+✓ Configuration test complete
+✓ All required settings present
+
+Manual test: Visit /oauth/sso/authorize to test OAuth flow
+
+$ rake redmine:bless_this_sso:enable_sso_only   (exit 0)
+Enabling SSO-only mode...
+✓ SSO-only mode enabled
+
+⚠️  WARNING: Username/password login is now disabled!
+   If OAuth fails, disable SSO-only mode via rake command:
+   rake redmine:bless_this_sso:disable_sso_only
+   Or via database if rake is unavailable:
+   UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';
+
+All login attempts will now redirect to your OAuth provider.
+
+$ rake redmine:bless_this_sso:disable_sso_only   (exit 0)
+Disabling SSO-only mode...
+✓ SSO-only mode disabled
+✓ Username/password login re-enabled
+✓ OAuth SSO remains available as alternative login method
+
+$ rake redmine:bless_this_sso:enable_pkce   (exit 0)
+Enabling PKCE...
+✓ PKCE enabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ✓ Enabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:disable_pkce   (exit 0)
+Disabling PKCE...
+✓ PKCE disabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:enable_match_by_email   (exit 0)
+Enabling match-by-email...
+✓ Match users by email enabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ✓ Enabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:disable_match_by_email   (exit 0)
+Disabling match-by-email...
+✓ Match users by email disabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:enable_case_insensitive_login   (exit 0)
+Enabling case-insensitive login matching...
+✓ Case-insensitive login matching enabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ✓ Enabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:disable_case_insensitive_login   (exit 0)
+Disabling case-insensitive login matching...
+✓ Case-insensitive login matching disabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ❌ Disabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:enable_bypass_twofa   (exit 0)
+Enabling bypass of Redmine MFA...
+✓ Bypass Redmine MFA enabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ❌ Disabled
+Bypass Redmine MFA: ✓ Enabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:disable_bypass_twofa   (exit 0)
+Disabling bypass of Redmine MFA...
+✓ Bypass Redmine MFA disabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ❌ Disabled
+Bypass Redmine MFA: ❌ Disabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:disable   (exit 0)
+Disabling OAuth SSO...
+✓ OAuth SSO disabled
+OAuth SSO Plugin Status
+=======================
+Status: ❌ Disabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ❌ Disabled
+Bypass Redmine MFA: ❌ Disabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+
+To enable OAuth SSO: rake redmine:bless_this_sso:enable
+
+$ rake redmine:bless_this_sso:test   (exit non-zero)
+Testing OAuth SSO configuration...
+❌ OAuth SSO not enabled
+
+$ rake redmine:bless_this_sso:enable   (exit 0)
+Enabling OAuth SSO...
+✓ OAuth SSO enabled
+OAuth SSO Plugin Status
+=======================
+Status: ✓ Enabled
+SSO-Only Mode: ❌ Disabled
+Auto-create Users: ✓ Enabled
+Update Existing Users: ✓ Enabled
+Match Users by Email: ❌ Disabled
+Case-insensitive Login Matching: ❌ Disabled
+Bypass Redmine MFA: ❌ Disabled
+Use PKCE: ❌ Disabled
+Default Groups: None
+
+Configuration:
+  Provider Name: FakeIdP (rake)
+  Client (application) ID: redmine-e2e
+  Authorization URL: http://127.0.0.1:3999/authorize
+  Token URL: http://127.0.0.1:3999/token
+  User Info URL: http://127.0.0.1:3999/userinfo
+  Scope: openid email profile
+  Expected Issuer: http://127.0.0.1:3999
+  Expected Client ID (aud): redmine-e2e
+  JWKS URL: http://127.0.0.1:3999/jwks
+  Redirect URI: Auto-generated
+  Logout URL: http://127.0.0.1:3999/logout
+  Mapping Preset: generic
+  Login Field(s): name,preferred_username,sub,login,userPrincipalName
+  Email Field(s): email,mail,userPrincipalName
+  First Name Field(s): given_name,firstName,first_name,givenName
+  Last Name Field(s): family_name,lastName,last_name,sn
+
+OAuth endpoints:
+  Login: /oauth/sso/authorize
+  Callback: /oauth/callback
+
+To disable OAuth SSO: rake redmine:bless_this_sso:disable
+
+$ rake redmine:bless_this_sso:help   (exit 0)
+Available OAuth SSO rake tasks:
+===============================
+
+Run tasks with: bundle exec rake redmine:bless_this_sso:<task> [ENV=VALUE ...]
+
+Setup tasks:
+  rake redmine:bless_this_sso:install       - Install plugin (check status)
+  rake redmine:bless_this_sso:configure     - Configure OAuth provider
+  rake redmine:bless_this_sso:test          - Test configuration
+  rake redmine:bless_this_sso:validate_flow - Validate full OAuth flow
+
+Management tasks:
+  rake redmine:bless_this_sso:status                         - Show current configuration
+  rake redmine:bless_this_sso:enable                         - Enable OAuth SSO
+  rake redmine:bless_this_sso:disable                        - Disable OAuth SSO
+  rake redmine:bless_this_sso:enable_sso_only                - Enable SSO-only mode
+  rake redmine:bless_this_sso:disable_sso_only               - Disable SSO-only mode
+  rake redmine:bless_this_sso:enable_match_by_email          - Match users by email
+  rake redmine:bless_this_sso:disable_match_by_email         - Do not match by email
+  rake redmine:bless_this_sso:enable_case_insensitive_login  - Ignore login casing when matching
+  rake redmine:bless_this_sso:disable_case_insensitive_login - Require exact login casing
+  rake redmine:bless_this_sso:enable_bypass_twofa            - Skip Redmine MFA activation
+  rake redmine:bless_this_sso:disable_bypass_twofa           - Require Redmine MFA activation
+  rake redmine:bless_this_sso:enable_pkce                    - Use PKCE code challenge
+  rake redmine:bless_this_sso:disable_pkce                   - Do not use PKCE
+  rake redmine:bless_this_sso:reset                          - Reset configuration
+
+Discovery shortcuts (used with :configure):
+  OAUTH_PROVIDER=google                                                     # Google Workspace defaults
+  OAUTH_PROVIDER=microsoft OAUTH_MICROSOFT_TENANT=<tenant>                  # Microsoft Entra ID defaults
+  OAUTH_PROVIDER=casdoor   OAUTH_CASDOOR_BASE_URL=https://door.example.com  # Casdoor defaults
+  OAUTH_DISCOVERY_URL=https://id.example.com/.well-known/openid-configuration
+    (Always include OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET alongside the above.)
+
+General configuration variables:
+  OAUTH_PROVIDER_NAME         - Display name (default: Casdoor SSO)
+  OAUTH_CLIENT_ID             - OAuth client ID
+  OAUTH_CLIENT_SECRET         - OAuth client secret
+  OAUTH_SCOPE                 - OAuth scopes (default: openid email profile)
+  OAUTH_REDIRECT_URI          - Callback URL (optional, auto-generated)
+  OAUTH_LOGOUT_URL            - Provider logout endpoint
+  OAUTH_DEFAULT_GROUPS        - Default group IDs for new users
+
+Discovery tuning and endpoint overrides:
+  OAUTH_PROVIDER                          - Discovery preset (google, microsoft, casdoor, custom)
+  OAUTH_TENANT / OAUTH_MICROSOFT_TENANT   - Microsoft tenant ID or domain
+  OAUTH_BASE_URL / OAUTH_CASDOOR_BASE_URL - Base URL for Casdoor discovery
+  OAUTH_DISCOVERY_URL                     - Explicit discovery document URL
+  OAUTH_AUTHORIZE_URL                     - Authorization endpoint override
+  OAUTH_TOKEN_URL                         - Token endpoint override
+  OAUTH_USERINFO_URL                      - User info endpoint override
+  OAUTH_EXPECTED_ISSUER                   - Expected `iss` claim for ID tokens
+  OAUTH_EXPECTED_CLIENT_ID                - Override expected `aud` (defaults to client ID)
+  OAUTH_JWKS_URL                          - JWKS endpoint for RS256 verification
+
+Mapping and provisioning options:
+  OAUTH_FIELD_PRESET           - Mapping preset (generic, microsoft, google, casdoor)
+  OAUTH_LOGIN_FIELD            - Override login mapping
+  OAUTH_EMAIL_FIELD            - Override email mapping
+  OAUTH_FIRSTNAME_FIELD        - Override first name mapping
+  OAUTH_LASTNAME_FIELD         - Override last name mapping
+  OAUTH_AUTO_CREATE            - Auto-create users (1 or 0)
+  OAUTH_UPDATE_EXISTING        - Update existing users (1 or 0)
+  OAUTH_MATCH_BY_EMAIL         - Match users by email when logins differ (1 or 0)
+  OAUTH_CASE_INSENSITIVE_LOGIN - Ignore login casing when matching users (1 or 0)
+  OAUTH_BYPASS_TWOFA           - Skip Redmine two-factor activation (1 or 0)
+  OAUTH_PKCE                   - Use PKCE code challenge (1 or 0)
+
+Example:
+  bundle exec rake redmine:bless_this_sso:configure \
+    OAUTH_PROVIDER=microsoft \
+    OAUTH_MICROSOFT_TENANT=contoso.onmicrosoft.com \
+    OAUTH_CLIENT_ID=your-client-id \
+    OAUTH_CLIENT_SECRET=your-client-secret
+
+$ rake redmine:bless_this_sso:reset   (exit 0)
+Resetting OAuth SSO configuration...
+✓ OAuth SSO configuration reset
+✓ Plugin disabled
+
+To reconfigure: rake redmine:bless_this_sso:configure

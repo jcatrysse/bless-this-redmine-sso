@@ -213,8 +213,43 @@ if defined?(OauthController) && defined?(Setting)
 
         get :callback, params: { state: 'expected', code: 'abc' }
 
-        expect(flash[:error]).to include("Login can't be blank")
+        # flash is rendered as HTML by core, so the message arrives escaped
+        expect(flash[:error]).to include(ERB::Util.h("Login can't be blank"))
         expect(response).to redirect_to(signin_path)
+      end
+
+      it 'escapes the provider error before it goes into the flash' do
+        session[:oauth_state] = 'expected'
+
+        get :callback, params: { state: 'expected', error: '<img src=x onerror=alert(1)>' }
+
+        expect(flash[:error]).to include('&lt;img src=x onerror=alert(1)&gt;')
+        expect(flash[:error]).not_to include('<img')
+        expect(response).to redirect_to(signin_path)
+      end
+
+      it 'escapes user validation errors before they go into the flash' do
+        session[:oauth_state] = 'expected'
+        allow(controller).to receive(:exchange_code_for_token).and_return('access_token' => 'token', 'id_token' => 'jwt')
+        allow(controller).to receive(:verify_id_token).and_return('sub' => 'user-1')
+        allow(controller).to receive(:get_user_info).and_return({})
+        errors = double('errors', any?: true, full_messages: ['Login <script>x</script> is invalid'])
+        allow(controller).to receive(:find_or_create_user).and_return(double('User', errors: errors, active?: true))
+
+        get :callback, params: { state: 'expected', code: 'abc' }
+
+        expect(flash[:error]).to include('&lt;script&gt;')
+        expect(flash[:error]).not_to include('<script>')
+      end
+
+      it 'escapes id_token errors before they go into the flash' do
+        session[:oauth_state] = 'expected'
+        allow(controller).to receive(:exchange_code_for_token).and_return('access_token' => 'token', 'id_token' => 'invalid')
+        allow(controller).to receive(:verify_id_token).and_raise(OauthController::IdTokenValidationError.new('<b>bad</b>'))
+
+        get :callback, params: { state: 'expected', code: 'abc' }
+
+        expect(flash[:error]).to include('&lt;b&gt;bad&lt;/b&gt;')
       end
 
       it 'shows an error when id_token validation fails' do

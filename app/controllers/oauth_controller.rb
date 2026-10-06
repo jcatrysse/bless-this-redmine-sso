@@ -108,7 +108,7 @@ class OauthController < ApplicationController
           rescue IdTokenValidationError => e
             session.delete(:oauth_id_token)
             Rails.logger.error "ID token validation failed: #{e.message}"
-            flash[:error] = l(:flash_invalid_id_token, scope: :bless_this_redmine_sso, error: e.message)
+            flash[:error] = l(:flash_invalid_id_token, scope: :bless_this_redmine_sso, error: ERB::Util.h(e.message))
             redirect_to signin_path
             return
           end
@@ -124,7 +124,7 @@ class OauthController < ApplicationController
               flash[:error] = l(:flash_authentication_failed, scope: :bless_this_redmine_sso)
               redirect_to signin_path
             elsif user&.errors&.any?
-              flash[:error] = user.errors.full_messages.join(', ')
+              flash[:error] = ERB::Util.h(user.errors.full_messages.join(', '))
               redirect_to signin_path
             elsif user&.active?
               # Log the user in
@@ -156,8 +156,10 @@ class OauthController < ApplicationController
         redirect_to signin_path
       end
     else
+      # Core renders flash messages as HTML, so text from the provider, the
+      # token or the user record is escaped before it goes into one.
       error_msg = params[:error] || l(:flash_unknown_error, scope: :bless_this_redmine_sso)
-      flash[:error] = l(:flash_oauth_failed, scope: :bless_this_redmine_sso, error: error_msg)
+      flash[:error] = l(:flash_oauth_failed, scope: :bless_this_redmine_sso, error: ERB::Util.h(error_msg))
       redirect_to signin_path
     end
   end

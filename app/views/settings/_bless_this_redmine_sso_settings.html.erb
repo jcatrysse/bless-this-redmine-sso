@@ -1,9 +1,12 @@
+<%# Stored flags are '1'/'0' strings (or true/false defaults); check_box_tag
+    treats any string, '0' included, as checked, so parse them like the controller. %>
+<% oauth_flag = ->(key) { %w[1 true].include?(@settings[key].to_s.downcase) } %>
 <div class="box tabular">
   <h3><%= l(:label_oauth_sso_configuration, scope: :bless_this_redmine_sso) %></h3>
 
   <p>
     <%= content_tag 'label', l(:label_enable_oauth_sso, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_enabled]', '1', @settings['oauth_enabled']) %>
+    <%= check_box_tag('settings[oauth_enabled]', '1', oauth_flag.call('oauth_enabled')) %>
   </p>
 
   <div id="oauth_sso_only_warning" style="display: none; background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 15px 0; border-radius: 4px;">
@@ -23,13 +26,13 @@
 
   <p>
     <%= content_tag 'label', l(:label_sso_only_mode, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_sso_only]', '1', @settings['oauth_sso_only'], id: 'oauth_sso_only_checkbox') %>
+    <%= check_box_tag('settings[oauth_sso_only]', '1', oauth_flag.call('oauth_sso_only'), id: 'oauth_sso_only_checkbox') %>
     <em><%= l(:label_disable_username_password_login, scope: :bless_this_redmine_sso) %></em>
   </p>
 
   <p>
     <%= content_tag 'label', l(:label_bypass_twofa, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_bypass_twofa]', '1', @settings['oauth_bypass_twofa']) %>
+    <%= check_box_tag('settings[oauth_bypass_twofa]', '1', oauth_flag.call('oauth_bypass_twofa')) %>
     <em><%= l(:hint_bypass_twofa, scope: :bless_this_redmine_sso) %></em>
   </p>
 
@@ -137,7 +140,7 @@
 
   <p>
     <%= content_tag 'label', l(:label_use_pkce, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_pkce]', '1', @settings['oauth_pkce']) %>
+    <%= check_box_tag('settings[oauth_pkce]', '1', oauth_flag.call('oauth_pkce')) %>
     <em><%= l(:hint_use_pkce, scope: :bless_this_redmine_sso) %></em>
   </p>
 
@@ -221,19 +224,19 @@
 
   <p>
     <%= content_tag 'label', l(:label_auto_create, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_auto_create]', '1', @settings['oauth_auto_create']) %>
+    <%= check_box_tag('settings[oauth_auto_create]', '1', oauth_flag.call('oauth_auto_create')) %>
     <em><%= l(:hint_auto_create, scope: :bless_this_redmine_sso) %></em>
   </p>
 
   <p>
     <%= content_tag 'label', l(:label_update_existing, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_update_existing]', '1', @settings['oauth_update_existing']) %>
+    <%= check_box_tag('settings[oauth_update_existing]', '1', oauth_flag.call('oauth_update_existing')) %>
     <em><%= l(:hint_update_existing, scope: :bless_this_redmine_sso) %></em>
   </p>
 
   <p>
     <%= content_tag 'label', l(:label_match_by_email, scope: :bless_this_redmine_sso) %>
-    <%= check_box_tag('settings[oauth_match_by_email]', '1', @settings['oauth_match_by_email']) %>
+    <%= check_box_tag('settings[oauth_match_by_email]', '1', oauth_flag.call('oauth_match_by_email')) %>
     <em><%= l(:hint_match_by_email, scope: :bless_this_redmine_sso) %></em>
   </p>
 

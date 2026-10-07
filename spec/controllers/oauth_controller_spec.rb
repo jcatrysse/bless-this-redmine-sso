@@ -214,6 +214,31 @@ if defined?(OauthController) && defined?(Setting)
         expect(captured_logged_user).to eq(user)
       end
 
+      # Jan, 2026-10-07: a successful SSO login starts sudo mode, as a
+      # password login does in core (AccountController#password_authentication).
+      it 'starts sudo mode on a successful SSO login' do
+        user = User.find_by(login: 'admin') || User.where(admin: true).first
+        session[:oauth_state] = 'expected'
+        allow(controller).to receive(:exchange_code_for_token).and_return('access_token' => 'token', 'id_token' => 'jwt')
+        allow(controller).to receive(:verify_id_token).and_return('sub' => 'admin')
+        allow(controller).to receive(:get_user_info).and_return('sub' => 'admin')
+        allow(controller).to receive(:find_or_create_user).and_return(user)
+
+        get :callback, params: { state: 'expected', code: 'abc' }
+
+        expect(session[:user_id]).to eq(user.id)
+        expect(session[:sudo_timestamp].to_i).to be_within(60).of(Time.now.to_i)
+      end
+
+      it 'does not start sudo mode when the SSO login is refused' do
+        session[:oauth_state] = 'expected'
+        allow(controller).to receive(:exchange_code_for_token).and_return(nil)
+
+        get :callback, params: { state: 'expected', code: 'abc' }
+
+        expect(session[:sudo_timestamp]).to be_nil
+      end
+
       it 'redirects to signin when state does not match' do
         session[:oauth_state] = 'expected'
         get :callback, params: { state: 'mismatch' }

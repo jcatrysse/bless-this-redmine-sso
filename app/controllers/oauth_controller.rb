@@ -133,6 +133,9 @@ class OauthController < ApplicationController
               back_url = session.delete(:oauth_back_url)
               redirect_target = back_url && validate_back_url(back_url)
               self.logged_user = user
+              # The provider login counts as re-authentication, like a
+              # password login in core: start sudo mode (Jan, 2026-10-07).
+              update_sudo_timestamp!
               session[:oauth_logged_in] = true
               session.delete(:must_activate_twofa) if %w[1 true].include?(settings['oauth_bypass_twofa'].to_s.downcase)
               Rails.logger.info "Successful OAuth authentication for '#{user.login}' from #{request.remote_ip}"

@@ -45,7 +45,21 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 
 In this order: things that break, security, the GEOxyz changes, the open items, then the checks.
 
-**Decided by Jan (2026-10-06), do not reopen**
+**Decided by Jan (2026-10-07), do not reopen**
+
+General, for every GEOxyz plugin:
+- GEOxyz goes straight to Redmine 7: no backports to 5.1. Nothing is cherry-picked to the default branch or to `feature_version_2.0.0`; `redmine70-migration` is what goes live with Redmine 7. Redmine 5.1 compatibility is no longer a requirement; no code paths that exist only for 5.1.
+- GEOxyz runs PostgreSQL 16 only. Tests and e2e run on PostgreSQL only; SQL stays portable where that costs nothing; a MariaDB-only problem is a note, not a blocker.
+- A plugin that depends on deface requires it without a version constraint (this plugin does not use deface).
+- A core method that other plugins also patch is patched with `prepend`, never `alias_method` (this plugin only uses `prepend`; checked 2026-10-07).
+- GitHub Actions stay manual only (`workflow_dispatch`).
+
+For this plugin (the former open questions):
+- **Q1 Sudo mode at SSO login: B**, "De plugin start sudo-modus bij een geslaagde SSO-login". Built, see the work list.
+- **Q2 Sign out**: no option chosen; Jan's note, verbatim: "Jan: Kijk eerst hoe het nu echt werkt. De bedoeling bij afmelden is NIET de SSO-sessie af te melden, maar alleen uit Redmine uit te loggen; Jan had daar iets speciaals voor gemaakt (zie zijn eerdere commit, o.a. 7c9cb89). Controleer het gedrag op de branch tegen die bedoeling, pas aan zodat afmelden alleen Redmine afmeldt, en leg uit wat je vond." Built, see the work list.
+- **Q3 Local password management for SSO users: B**, "Later apart bouwen binnen het huidige ontwerp", with Jan's note, verbatim: "Jan: NU bouwen (niet later). Normale SSO-gebruikers klikken op Wachtwoord wijzigen maar hun wachtwoord zit in hun SSO-account, niet in Redmine. Verberg/blokkeer lokaal wachtwoordbeheer voor SSO-gebruikers, zonder secret in het log en zonder automatisch aangemaakt veld; past bij bless 1 (SSO-login start sudo-modus)." Built now, see the work list.
+
+**Decided by Jan (2026-10-06), do not reopen** (Q1 of 2026-10-07 supersedes the "no change in the plugin" part)
 
 - Sudo mode stays as Redmine 7 ships it (on), no change in the plugin or in configuration.yml. Only verify on a running Redmine that an admin who logs in through SSO can still confirm a sudo action, and write the result here.
 
@@ -174,11 +188,8 @@ permissions; everything is admin-only or anonymous/login related.
 
 ## Open questions for Jan
 
-Built as recommended below, nothing waiting; each can be changed later.
-
-- **Q1 Sudo mode for SSO admins.** Today (R7, decision "sudo stays on"): SSO admins need a known local password for every admin page behind sudo, SSO-created admins cannot use them at all, and with MFA bypass off SSO users cannot activate 2FA. Options: (a) keep as is, give every admin a local password (current, no code); (b) let the plugin start sudo mode at a successful SSO login, like a password login does (one line, `update_sudo_timestamp!` in the callback; the IdP login counts as re-authentication for 15 minutes); (c) turn sudo off in configuration.yml. Recommendation: (b) if admins use SSO-only accounts, else (a). Not built, because the decision of 2026-10-06 says no change in the plugin.
-- **Q2 prompt=login after sign out.** Built (`138fc01`): after a Redmine sign out without a provider logout URL, the next SSO login sends `prompt=login`, so Entra ID asks which account / credentials instead of logging straight back in. This was the intent of 7c9cb89 but never worked. Option: drop it if users find the extra prompt annoying. Recommendation: keep; in SSO-only mode sign out is otherwise impossible.
-- **Q3 Block local password for SSO users** (upstream feature). Not built. Options: (a) leave; (b) build within the 2.0.0 design (no runtime custom field, no secret logging). Recommendation: (a) for the migration; (b) as a separate change if wanted, it interacts with Q1 (sudo needs a password).
+None. Q1 to Q3 were decided on 2026-10-07; see "Decided by Jan (2026-10-07)" at the top of the
+work list.
 
 ## After the upgrade (production)
 
@@ -222,7 +233,7 @@ results quoted in the analysis come from it.
 1. **Start**: `git fetch && git checkout redmine70-migration && git pull`. Read this whole file,
    including the analysis report at the bottom. Do not reopen decisions recorded here.
 2. **Baseline, before you change anything**:
-   - the plugin's tests on Redmine 7.0-stable-GEOxyz with PostgreSQL and with MariaDB;
+   - the plugin's tests on Redmine 7.0-stable-GEOxyz with PostgreSQL;
    - a real running Redmine with this plugin (`./.codex/start_server.sh`) and the browser run
      (`./.codex/e2e.sh`: smoke over every page the plugin adds, plus the core issue flows).
    Write the numbers here. Something already broken now is a finding, not your regression.
@@ -234,9 +245,8 @@ results quoted in the analysis come from it.
 4. **GEOxyz changes**: go through the table above, one item at a time. Each kept or re-made change
    is its own commit with a test that proves it. Record the verdict in the table.
 5. **Work list**: then the numbered list, in order. One concern per commit.
-6. **Portability**: everything must run on Redmine's supported databases (PostgreSQL,
-   MySQL/MariaDB; SQLite where the plugin already supports it). Migrations must be reversible and
-   are run down and up on PostgreSQL and MariaDB.
+6. **Portability**: PostgreSQL 16 is what GEOxyz runs (Jan, 2026-10-07); keep SQL portable where
+   that costs nothing. Migrations must be reversible and are run down and up on PostgreSQL.
 7. **Together**: run with the other GEOxyz plugins installed (the migration kit's harness, or
    `RMP_EXTRA_PLUGINS`). A failure that only appears in combination is a finding to record here.
 8. **End to end, visually, every function**: on the real Redmine from `start_server.sh`
@@ -255,7 +265,6 @@ results quoted in the analysis come from it.
      reads them; API through `t.page.request`) and record command and result.
    - Before pictures where behaviour or layout changes: the branch GEOxyz runs today, on
      Redmine 5.1, same scenarios, `RMP_E2E_OUT=docs/e2e/before`.
-   - Run the whole e2e set once on MariaDB as well (`RMP_DB=mariadb`, then `start_server.sh --reset`).
 9. **Independent review**: first your own, adversarial: re-read the whole diff as if someone
    else wrote it and you are paid to reject it. Then, **when `OPENAI_API_KEY` is set in the
    session**, `./.codex/openai_review.sh`: it sends the diff of this branch to an OpenAI model
@@ -300,8 +309,12 @@ results quoted in the analysis come from it.
   (on by default: `t.sudo()` in a scenario). The breaker list is in the migration kit's CHECKLIST.md.
 - **Locales**: keep the locales the plugin ships in sync; translate a new key by matching the
   closest existing key in the same file, not from scratch; do not add new languages.
-- **5.1 compatibility**: prefer fixes that also run on Redmine 5.1 so they can be merged early;
-  say so when a fix cannot.
+- **No 5.1** (Jan, 2026-10-07): GEOxyz goes straight to Redmine 7; no backports, no code paths
+  that exist only for Redmine 5.1.
+- **PostgreSQL only** (Jan, 2026-10-07): production runs PostgreSQL 16; tests and e2e on
+  PostgreSQL. Keep SQL portable where that costs nothing; a MariaDB-only problem is a note.
+- **Patching core**: `prepend`, never `alias_method`, on any core method (other plugins patch the
+  same methods; mixing both recurses).
 - **Git**: work on `redmine70-migration` only; never push to the default branch; never force-push
   a branch someone else uses. Descriptive commit messages (what and why). Push after every
   commit, together with the updated status in this file: a cloud session can stop at a usage
@@ -312,7 +325,7 @@ results quoted in the analysis come from it.
 ## Definition of done
 
 - All items of the work list are done or explicitly deferred with a reason, in this file.
-- The plugin's tests are green on Redmine 7.0-stable-GEOxyz with PostgreSQL and MariaDB
+- The plugin's tests are green on Redmine 7.0-stable-GEOxyz with PostgreSQL
   (numbers in this file); boot, production-like eager load, migrations up/down OK.
 - Every function in the inventory exercised end to end on a real running Redmine, with and
   without permissions and on its failure paths; `./.codex/e2e.sh` green; screenshots looked at,

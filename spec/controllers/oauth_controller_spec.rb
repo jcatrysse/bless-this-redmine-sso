@@ -230,6 +230,26 @@ if defined?(OauthController) && defined?(Setting)
         expect(session[:sudo_timestamp].to_i).to be_within(60).of(Time.now.to_i)
       end
 
+      # Jan, 2026-10-07: from the first SSO login on, the account's password
+      # is managed at the provider (no local password management).
+      it 'marks the user as an SSO user on a successful SSO login' do
+        login = "sso_mark_#{SecureRandom.hex(4)}"
+        user = User.new(login: login, firstname: 'Sso', lastname: 'Mark', mail: "#{login}@example.net")
+        user.password = user.password_confirmation = 'Passw0rd!Passw0rd'
+        user.save!
+        session[:oauth_state] = 'expected'
+        allow(controller).to receive(:exchange_code_for_token).and_return('access_token' => 'token', 'id_token' => 'jwt')
+        allow(controller).to receive(:verify_id_token).and_return('sub' => login)
+        allow(controller).to receive(:get_user_info).and_return('sub' => login)
+        allow(controller).to receive(:find_or_create_user).and_return(user)
+
+        get :callback, params: { state: 'expected', code: 'abc' }
+
+        expect(User.find(user.id).change_password_allowed?).to be(false)
+      ensure
+        user&.destroy
+      end
+
       it 'does not start sudo mode when the SSO login is refused' do
         session[:oauth_state] = 'expected'
         allow(controller).to receive(:exchange_code_for_token).and_return(nil)

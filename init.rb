@@ -43,3 +43,4 @@ end
 require_relative 'lib/bless_this_redmine_sso/hooks'
 require_relative 'lib/bless_this_redmine_sso/discovery'
 require_relative 'lib/bless_this_redmine_sso/patches/account_controller_patch'
+require_relative 'lib/bless_this_redmine_sso/patches/user_patch'

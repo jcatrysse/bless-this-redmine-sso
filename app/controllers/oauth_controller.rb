@@ -136,6 +136,9 @@ class OauthController < ApplicationController
               # The provider login counts as re-authentication, like a
               # password login in core: start sudo mode (Jan, 2026-10-07).
               update_sudo_timestamp!
+              # The password of an SSO user lives at the provider: no local
+              # password management for this account from now on.
+              user.mark_as_bless_this_sso_user! if user.is_a?(User)
               session[:oauth_logged_in] = true
               session.delete(:must_activate_twofa) if %w[1 true].include?(settings['oauth_bypass_twofa'].to_s.downcase)
               Rails.logger.info "Successful OAuth authentication for '#{user.login}' from #{request.remote_ip}"

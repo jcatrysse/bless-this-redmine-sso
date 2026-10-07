@@ -236,6 +236,23 @@ Or via database if rake is unavailable:
 UPDATE settings SET value = REPLACE(value, 'oauth_sso_only: ''1''', 'oauth_sso_only: ''0'''), updated_on = CURRENT_TIMESTAMP WHERE name = 'plugin_bless_this_redmine_sso';
 ```
 
+## Passwords of SSO users
+
+A user who has signed in through SSO once keeps their password at the provider. From then on
+Redmine offers no local password management for that account, the same way it treats LDAP
+users: no "Change password" link, `/my/password` and the lost-password mail are refused. The
+mark is stored in the user's preferences (no custom field). Administrators can still set a
+password in Administration > Users, and turning OAuth SSO off lifts the block. To remove the
+mark from one account:
+
+```bash
+bundle exec rails runner -e production "u = User.find_by_login('jdoe'); u.pref[:bless_this_sso_user] = nil; u.pref.save"
+```
+
+A successful SSO login also starts Redmine's sudo mode, so SSO users can open administration
+pages that ask for the password; when the sudo window has expired, signing out and in again
+through SSO restarts it.
+
 ## Two-Factor Authentication
 
 SSO logins bypass Redmine's built-in MFA activation flow. The **Bypass Redmine MFA** option appears under the User Provisioning settings. To require Redmine MFA after SSO, disable this option in the UI or run `rake redmine:bless_this_sso:disable_bypass_twofa` (or set `OAUTH_BYPASS_TWOFA=0` when using the `configure` task).

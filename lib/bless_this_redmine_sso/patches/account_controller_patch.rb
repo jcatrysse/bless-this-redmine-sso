@@ -22,9 +22,6 @@ module BlessThisRedmineSso
               if (back_url = params[:back_url]).present?
                 query_params[:back_url] = back_url
               end
-              if session.delete(:oauth_prompt_login)
-                query_params[:prompt] = 'login'
-              end
               url = '/oauth/sso/authorize'
               if query_params.present?
                 query_string = Rack::Utils.build_query(query_params)
@@ -39,25 +36,9 @@ module BlessThisRedmineSso
           super
         end
 
-        def logout
-          settings = Setting.plugin_bless_this_redmine_sso
-          logout_url = settings['oauth_logout_url'].to_s
-          oauth_enabled = %w[1 true].include?(settings['oauth_enabled'].to_s.downcase)
-
-          # Core logs out on POST only (GET shows a confirmation form), so a
-          # link or image elsewhere cannot end the session.
-          if oauth_enabled && logout_url.present? && session[:oauth_logged_in] && request.post?
-            # End the Redmine session without triggering the default redirect
-            logout_user
-            session.delete(:oauth_logged_in)
-            redirect_to logout_url
-          else
-            super
-            # Force provider to show the login screen on next authorization when SSO is enabled.
-            # Set after super: logout_user resets the session.
-            session[:oauth_prompt_login] = true if oauth_enabled && request.post?
-          end
-        end
+        # No logout override: signing out of Redmine ends only the Redmine
+        # session (core, POST only). The provider session stays; the login
+        # page offers a separate "SSO Logout" link to the provider's logout URL.
       end
     end
   end

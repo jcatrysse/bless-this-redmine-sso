@@ -62,7 +62,7 @@ A comprehensive OAuth/OpenID Connect SSO plugin for Redmine that supports any OA
     - **Case-insensitive Login Matching**: Treat OAuth usernames as matching existing logins even when casing differs (enabled by default; disable to require an exact match)
     - **Bypass Redmine MFA**: Skip Redmine's MFA activation for SSO logins
     - **Default Group IDs**: Comma-separated list of group IDs added to new users
-    - **Logout URL**: Optional provider logout endpoint to redirect users after Redmine logout
+    - **Logout URL**: Optional provider logout endpoint, offered as an "SSO Logout" link on the login page (signing out of Redmine does not end the provider session)
 
 4. **Optional**: Enable "SSO-Only Mode" to disable username/password login
 
@@ -242,10 +242,11 @@ SSO logins bypass Redmine's built-in MFA activation flow. The **Bypass Redmine M
 
 ## Logout Flow
 
-When a user logs out of Redmine:
+When a user signs out of Redmine, only the Redmine session ends; the session with the OAuth
+provider stays, so the next SSO login goes through without asking for credentials again.
 
-- The Redmine session is terminated.
-- If a **Logout URL** is configured, the user is redirected there to end the session with the OAuth provider.
+If a **Logout URL** is configured, the login page shows an extra **SSO Logout** link to it, for
+users who also want to end their session with the provider.
 
 ## User Mapping
 

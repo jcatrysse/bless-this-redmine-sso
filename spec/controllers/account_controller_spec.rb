@@ -21,13 +21,15 @@ if defined?(AccountController) && defined?(Setting)
             expect(response).not_to redirect_to(logout_url)
           end
 
-          it 'asks the provider for credentials on the next SSO login' do
+          # Jan, 2026-10-07: signing out ends the Redmine session only; the
+          # next SSO login must not force the provider to ask again.
+          it 'does not ask the provider for credentials on the next SSO login' do
             user = User.find_by(login: 'admin') || User.first
             session[:user_id] = user.id
             session[:tk] = user.generate_session_token
             post :logout
             expect(session[:user_id]).to be_nil
-            expect(session[:oauth_prompt_login]).to be(true)
+            expect(session[:oauth_prompt_login]).to be_nil
           end
         end
 
@@ -36,9 +38,17 @@ if defined?(AccountController) && defined?(Setting)
         context 'with oauth session flag' do
           before { session[:oauth_logged_in] = true }
 
-          it 'redirects to the SSO logout URL' do
+          # Jan, 2026-10-07: sign out ends only the Redmine session, the
+          # provider session stays (the login page has a separate SSO Logout
+          # link). This used to redirect to the provider's logout URL.
+          it 'ends only the Redmine session and does not go to the SSO logout URL' do
+            user = User.find_by(login: 'admin') || User.first
+            session[:user_id] = user.id
+            session[:tk] = user.generate_session_token
             post :logout
-            expect(response).to redirect_to(logout_url)
+            expect(response).not_to redirect_to(logout_url)
+            expect(response).to redirect_to(home_url)
+            expect(session[:user_id]).to be_nil
           end
 
           it 'does not log out or leave Redmine on GET' do
@@ -87,7 +97,10 @@ if defined?(AccountController) && defined?(Setting)
         expect(params).not_to have_key('prompt')
       end
 
-      it 'includes the prompt parameter when required' do
+      # Jan, 2026-10-07: sign out ends the Redmine session only, so the
+      # SSO-only redirect never asks the provider to prompt again (this
+      # spec used to expect prompt=login after a logout).
+      it 'does not add a prompt parameter, even with a flag left in the session' do
         session[:oauth_prompt_login] = true
 
         get :login, params: { back_url: 'https://example.com/issues/42' }
@@ -96,7 +109,7 @@ if defined?(AccountController) && defined?(Setting)
         expect(uri.path).to eq('/oauth/sso/authorize')
         params = Rack::Utils.parse_nested_query(uri.query)
         expect(params['back_url']).to eq('https://example.com/issues/42')
-        expect(params['prompt']).to eq('login')
+        expect(params).not_to have_key('prompt')
       end
     end
   end

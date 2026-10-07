@@ -65,7 +65,7 @@ nl:
     hint_redirect_uri: "OAuth callback-URL (laat leeg om: %{url} te gebruiken)"
     label_logout_url: "Logout-URL (optioneel)"
     placeholder_logout_url: "https://jouw-provider.com/logout"
-    hint_logout_url: "Hierheen doorsturen na Redmine-logout om de providersessie te beëindigen"
+    hint_logout_url: "Getoond als link \"SSO-afmelden\" op de inlogpagina; afmelden bij Redmine beëindigt de providersessie niet"
     label_bypass_twofa: "Redmine-MFA overslaan"
     hint_bypass_twofa: "Sla Redmine's tweefactoractivatie over bij SSO-inloggen"
     label_user_mapping: "Gebruikerskoppeling"

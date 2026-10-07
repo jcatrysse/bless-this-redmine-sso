@@ -65,7 +65,7 @@ en:
     hint_redirect_uri: "OAuth callback URL (leave empty to use: %{url})"
     label_logout_url: "Logout URL (optional)"
     placeholder_logout_url: "https://your-provider.com/logout"
-    hint_logout_url: "Redirect here after Redmine logout to end the provider session"
+    hint_logout_url: "Shown as an \"SSO Logout\" link on the login page; signing out of Redmine does not end the provider session"
     label_bypass_twofa: "Bypass Redmine MFA"
     hint_bypass_twofa: "Skip Redmine's two-factor activation prompts for SSO logins"
     label_user_mapping: "User Mapping"

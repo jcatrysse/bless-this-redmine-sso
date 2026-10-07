@@ -65,7 +65,7 @@ de:
     hint_redirect_uri: "OAuth-Callback-URL (leer lassen, um %{url} zu verwenden)"
     label_logout_url: "Logout-URL (optional)"
     placeholder_logout_url: "https://dein-provider.com/logout"
-    hint_logout_url: "Hierhin nach Redmine-Abmeldung weiterleiten, um die Provider-Sitzung zu beenden"
+    hint_logout_url: "Wird als Link \"SSO-Abmeldung\" auf der Anmeldeseite angezeigt; die Redmine-Abmeldung beendet die Provider-Sitzung nicht"
     label_bypass_twofa: "Redmine-MFA umgehen"
     hint_bypass_twofa: "Redmine-Zwei-Faktor-Aktivierungsaufforderungen bei SSO-Anmeldungen überspringen"
     label_user_mapping: "Benutzermapping"

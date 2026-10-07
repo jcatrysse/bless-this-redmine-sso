@@ -46,16 +46,17 @@ if defined?(OauthController) && defined?(Setting)
           expect(response.location).not_to include('prompt=')
         end
 
-        it 'asks the provider for credentials after a Redmine logout' do
+        # Jan, 2026-10-07: sign out ends the Redmine session only; the
+        # provider is never asked to prompt again.
+        it 'does not send prompt=login after a Redmine logout' do
           session[:oauth_prompt_login] = true
           get :authorize
-          expect(response.location).to include('prompt=login')
-          expect(session[:oauth_prompt_login]).to be_nil
+          expect(response.location).not_to include('prompt=')
         end
 
-        it 'forwards prompt=login from the SSO-only login redirect' do
+        it 'does not forward prompt=login from the request' do
           get :authorize, params: { prompt: 'login' }
-          expect(response.location).to include('prompt=login')
+          expect(response.location).not_to include('prompt=')
         end
 
         it 'does not forward other prompt values' do

@@ -65,7 +65,7 @@ fr:
     hint_redirect_uri: "URL de rappel OAuth (laisser vide pour utiliser : %{url})"
     label_logout_url: "URL de déconnexion (optionnel)"
     placeholder_logout_url: "https://votre-fournisseur.com/logout"
-    hint_logout_url: "Rediriger ici après la déconnexion de Redmine pour terminer la session fournisseur"
+    hint_logout_url: "Affiché comme lien \"Déconnexion SSO\" sur la page de connexion ; la déconnexion de Redmine ne termine pas la session fournisseur"
     label_bypass_twofa: "Contourner la MFA de Redmine"
     hint_bypass_twofa: "Ignore les invites d'activation à deux facteurs de Redmine pour les connexions SSO"
     label_user_mapping: "Mappage utilisateur"

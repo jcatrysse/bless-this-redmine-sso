@@ -23,10 +23,6 @@ class OauthController < ApplicationController
       end
     end
 
-    # After a Redmine logout the provider must ask for credentials again,
-    # otherwise its own session logs the user straight back in.
-    prompt_login = session.delete(:oauth_prompt_login) || params[:prompt] == 'login'
-
     unless oauth_configured?
       flash[:error] = l(:flash_oauth_not_configured, scope: :bless_this_redmine_sso)
       redirect_to signin_path
@@ -56,8 +52,6 @@ class OauthController < ApplicationController
       response_type: 'code',
       state: state
     }
-
-    params[:prompt] = 'login' if prompt_login
 
     if pkce_enabled
       params[:code_challenge] = code_challenge

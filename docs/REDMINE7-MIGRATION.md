@@ -104,6 +104,7 @@ For this plugin (the former open questions):
 | R7.0-stable-GEOxyz, MariaDB 10.11 | rspec 78 examples, 0 failures |
 | Redmine 5.1.13 (5.1-stable), PostgreSQL 16, Ruby 3.2.3 | rspec 76 examples, 0 failures, 1 pending (sprite icon check, Redmine 6+ only) |
 | R7 with redmine_impersonate, redmine_ldap_sync, view_customize, redmine_user_specific_theme, redmine_stealth (all `redmine70-migration`) | rspec 76/0; e2e 8 runs, 69 screenshots, 0 problems |
+| R7 with 30 other GEOxyz plugins (every public `jcatrysse/redmine_*` repo with a `redmine70-migration` branch, 2026-10-07) | rspec 93 examples, 0 failures; all 7 plugin scenarios 0 problems; smoke/core 2 problems, both from other plugins (below) |
 | e2e R7 PostgreSQL, production mode (`docs/e2e`), after Q1-Q3 (2026-10-07) | smoke 13, core 6, plugin scenarios 7 files / 59 screenshots, 0 problems |
 | e2e R7 MariaDB (`docs/e2e/mariadb`), 2026-10-06, before Q1-Q3 | 0 problems; historical, not rerun (PostgreSQL only) |
 | e2e before: feature_version_2.0.0 on 5.1.13 (`docs/e2e/before`) | 67 screenshots; 11 failed expectations, all the behaviour fixed here |
@@ -123,6 +124,9 @@ For this plugin (the former open questions):
     password), relative_url_root repeated.
   - `openai-2026-10-06-7c89cec.md`: 1 "blocker" that does not reproduce (Ruby local variable
     scoping, shown), relative_url_root repeated. Nothing new accepted: loop ended.
+  - `openai-2026-10-07-a78e82a.md` (diff of the 2026-10-07 work, Q1-Q3): no findings.
+- Own review of the 2026-10-07 commits: no defect; consequences recorded (silent SSO login starts
+  sudo, sudo expiry for SSO users, unused `session[:oauth_logged_in]`, SSO-only sign out).
 
 **Sudo mode and SSO (2026-10-06 measurement; Q1 of 2026-10-07 changed it)**
 
@@ -191,6 +195,17 @@ permissions; everything is admin-only or anonymous/login related.
 | Webhooks | - | n/a | plugin does not touch issue data |
 
 ## Findings not fixed (written down, not in scope)
+
+- Together with 30 other GEOxyz plugins (2026-10-07): Project > Settings answers 500,
+  `super: no superclass method 'project_settings_tabs'`, a recursion between
+  `redmine_mail_digest` (`alias_method :project_settings_tabs, ..._with_issue_digest`) and the
+  plugins that `prepend` the same method (itil_priority, ai_summary, depending_custom_fields,
+  wiki_extensions, custom_workflows, issue_view_columns, project_workflows, reporter_dashboards).
+  Not this plugin: it uses no `alias_method` and does not patch ProjectsHelper. To fix in
+  redmine_mail_digest (switch to `prepend`). The issue list answers 200 in that run.
+- In the same run, /issues/1 answers 403 for `reporter`: `redmine_view_issue_description`'s
+  filter `vid_authorize_issue_detail` refuses the core Reporter role, which lacks that plugin's
+  permission. By that plugin's design, not this plugin.
 
 - Hard-coded `/oauth/...` paths ignore `relative_url_root` (hooks, login patch). Pre-existing; GEOxyz runs at the root.
 - `OAuth user info: ...` is logged at info level with names and e-mail (PII, no secrets). Pre-existing.

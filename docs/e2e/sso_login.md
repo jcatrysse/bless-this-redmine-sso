@@ -1,11 +1,11 @@
 # sso_login
 
-Run 2026-10-06T19:47:22.326Z against http://127.0.0.1:3000.
+Run 2026-10-07T16:05:09.941Z against http://127.0.0.1:3000.
 
 | screenshot | user | URL | shows |
 |---|---|---|---|
 | ![](sso_login-login-page.png) | anonymous | `/login?back_url=http%3A%2F%2F127.0.0.1%3A3000%2Fissues%2F1` | Login page with the "Login with FakeIdP" button above the password form |
-| ![](sso_login-provider-page.png) | anonymous | `http://127.0.0.1:3999/authorize?client_id=redmine-e2e&redirect_uri=http%3A%2F%2F127.0.0.1%3A3000%2Foauth%2Fcallback&scope=openid+email+profile&response_type=code&state=5f66f13aa42307454eec4ef57e2a6429&code_challenge=08bDuo3LgHRIjT5dqbse_FgihKTQCUgUbgyIdBBy0Hc&code_challenge_method=S256` | At the provider: request from redmine-e2e with PKCE S256, no prompt |
+| ![](sso_login-provider-page.png) | anonymous | `http://127.0.0.1:3999/authorize?client_id=redmine-e2e&redirect_uri=http%3A%2F%2F127.0.0.1%3A3000%2Foauth%2Fcallback&scope=openid+email+profile&response_type=code&state=b67c2f8a0b90b5b9534b101dc010565a&code_challenge=10qvi-xV2l8bJ8nYIT_j7cAQuGlSDtrznCfP9Ok8Y54&code_challenge_method=S256` | At the provider: request from redmine-e2e with PKCE S256, no prompt |
 | ![](sso_login-new-user-back-url.png) | anonymous | `/issues/1` | New user sso.newbie created and logged in, landed on /issues/1 (back_url) |
 | ![](sso_login-new-user-admin-view.png) | admin | `/users/10/edit` | Admin view of the created user: name, e-mail, Employee ID E-1001, group SSO staff |
 | ![](sso_login-existing-user-updated.png) | anonymous | `/my/page` | Existing user manager logged in through SSO; name now "Managed ByIdP" from the provider |

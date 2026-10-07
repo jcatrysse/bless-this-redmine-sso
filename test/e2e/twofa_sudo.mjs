@@ -1,11 +1,11 @@
 // Two things around Redmine's own security after an SSO login:
 // - "Bypass Redmine MFA": with core 2FA required for everyone, an SSO login
 //   skips the 2FA activation when the option is on, and gets it when off.
-// - Sudo mode (on by default in Redmine 7, decided to stay on): an admin who
-//   logged in through SSO opens a sudo-protected page (plugin settings). The
-//   sudo form asks for the Redmine password: an admin matched to an account with
-//   a known local password passes; an admin created by SSO only has the random
-//   password the plugin set, so cannot (recorded in the migration plan).
+// - Sudo mode (on by default in Redmine 7): a successful SSO login starts it,
+//   like a password login does (Jan, 2026-10-07). An admin who signed in
+//   through SSO, also one that only exists through SSO and has no password of
+//   its own, opens and saves sudo-protected pages without a password prompt.
+//   Sudo mode gives no rights: a non-admin is still refused.
 import { e2e } from '../../.codex/e2e/lib.mjs';
 import { startIdp } from './_fake_idp.mjs';
 import { configure, rails, ssoLogin, loggedInAs, check, showAccount } from './_sso.mjs';
@@ -28,43 +28,57 @@ try {
   await t.anonymous();
   await ssoLogin(t, 'manager');
   await t.go('/projects').catch(() => {});
-  check(t, /\/my\/twofa|twofa/.test(t.page.url()), `bypass off: 2FA activation is enforced (at ${t.page.url()})`);
-  await t.shot('twofa-bypass-off', '2FA required, bypass off: after the SSO login core sends the user to 2FA activation');
+  check(t, /twofa/.test(t.page.url()), `bypass off: 2FA activation is enforced (at ${t.page.url()})`);
+  check(t, (await t.page.locator('#sudo_password').count()) === 0, 'bypass off: the 2FA activation is not blocked by a password prompt (sudo started by the SSO login)');
+  await t.shot('twofa-bypass-off', '2FA required, bypass off: core sends the SSO user to 2FA activation, which opens without a password prompt because the SSO login started sudo mode');
   rails(`Setting.twofa = '1'`);
 
-  // --- sudo mode for an SSO admin with a known local password
+  // --- sudo mode started by the SSO login: admin with a local password
   configure();
   await t.anonymous();
   await ssoLogin(t, 'admin');
   check(t, (await loggedInAs(t.page)) === 'admin', 'admin logged in through SSO');
-  // A password login starts sudo mode (core AccountController#password_authentication);
-  // an SSO login does not, so the settings page itself asks for the password.
   await t.go('/settings/plugin/bless_this_redmine_sso');
-  check(t, (await t.page.locator('#sudo_password').count()) === 1, 'sudo form shown for the SSO admin when opening the settings');
-  await t.shot('sudo-form', 'Admin logged in through SSO opens the plugin settings: Redmine 7 first asks for the password (sudo mode)');
-  await t.sudo('Redmine7Test!');
+  check(t, (await t.page.locator('#sudo_password').count()) === 0, 'SSO admin: no sudo prompt when opening the settings');
   await t.page.fill('#settings_oauth_provider_name', 'FakeIdP (sudo test)');
   await t.page.click('form[action*="settings/plugin"] input[type=submit]');
   await t.settle();
-  check(t, (await t.page.locator('#sudo_password').count()) === 0, 'within the sudo window no second password prompt');
-  check(t, (await t.page.locator('#flash_notice').count()) === 1, 'sudo with the local password: settings saved');
+  check(t, (await t.page.locator('#sudo_password').count()) === 0, 'SSO admin: no sudo prompt when saving');
+  check(t, (await t.page.locator('#flash_notice').count()) === 1, 'SSO admin: settings saved');
   check(t, rails(`puts Setting.plugin_bless_this_redmine_sso['oauth_provider_name']`) === 'FakeIdP (sudo test)', 'setting stored');
-  await t.shot('sudo-passed', 'With the account\'s Redmine password the sudo form passes and the settings are saved');
+  await t.shot('sudo-sso-admin', 'Admin signed in through SSO saves the plugin settings without a password prompt: the SSO login started sudo mode');
+  await t.go('/users/new');
+  check(t, (await t.page.locator('#sudo_password').count()) === 0 && (await t.page.locator('#user_login').count()) === 1, 'SSO admin: new user form without sudo prompt');
 
-  // --- sudo mode for an admin that only exists through SSO
+  // --- an admin that only exists through SSO (random password it does not know)
   rails(`u = User.find_by_login('sso.newbie'); u ||= User.new(login: 'sso.newbie', firstname: 'Nora', lastname: 'Newbie', mail: 'sso.newbie@example.net'); u.random_password; u.admin = true; u.status = 1; u.save!`);
   configure();
   await t.anonymous();
   await ssoLogin(t, 'newbie');
   check(t, (await loggedInAs(t.page)) === 'sso.newbie', 'SSO-only admin logged in');
   await t.go('/settings/plugin/bless_this_redmine_sso');
-  await t.page.fill('#sudo_password', 'guessing-does-not-help');
-  await t.page.locator('#sudo_password').press('Enter');
+  check(t, (await t.page.locator('#sudo_password').count()) === 0, 'SSO-only admin: no sudo prompt');
+  await t.page.fill('#settings_oauth_provider_name', 'FakeIdP (sudo by SSO admin)');
+  await t.page.click('form[action*="settings/plugin"] input[type=submit]');
   await t.settle();
-  check(t, (await t.page.locator('#sudo_password').count()) === 1, 'SSO-only admin: wrong password, sudo form again');
-  check(t, (await t.page.locator('#settings_oauth_provider_name').count()) === 0, 'SSO-only admin: settings page not reachable');
-  check(t, rails(`puts Setting.plugin_bless_this_redmine_sso['oauth_provider_name']`) === 'FakeIdP', 'SSO-only admin: nothing saved');
-  await t.shot('sudo-sso-only-admin', 'Admin created by SSO has no password of its own: the sudo form cannot be passed, the settings page stays closed');
+  check(t, (await t.page.locator('#flash_notice').count()) === 1, 'SSO-only admin: settings saved');
+  check(t, rails(`puts Setting.plugin_bless_this_redmine_sso['oauth_provider_name']`) === 'FakeIdP (sudo by SSO admin)', 'SSO-only admin: stored');
+  await t.shot('sudo-sso-only-admin', 'Admin that only exists through SSO (no password of its own) saves the plugin settings: no password prompt, saved');
+
+  // --- refusals: sudo mode gives no rights
+  for (const who of ['manager']) {
+    await t.anonymous();
+    await ssoLogin(t, who);
+    await t.go('/settings/plugin/bless_this_redmine_sso', { status: 403 });
+    await t.shot(`sudo-no-rights-${who}`, `${who} signed in through SSO: sudo mode is on but the plugin settings still answer 403`);
+  }
+  for (const who of ['reporter', 'outsider']) {
+    await t.login(who);
+    await t.go('/settings/plugin/bless_this_redmine_sso', { status: 403 });
+  }
+  await t.anonymous();
+  await t.go('/settings/plugin/bless_this_redmine_sso');
+  check(t, new URL(t.page.url()).pathname === '/login', 'anonymous: settings ask to log in');
 } finally {
   rails(`Setting.twofa = '1'; User.find_by_login('sso.newbie')&.update_column(:admin, false)`);
   configure();
